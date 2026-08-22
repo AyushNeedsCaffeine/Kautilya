@@ -1,0 +1,51 @@
+llm:
+  provider: gemini
+  model: gemini-2.0-flash
+  temperature: 0.1
+
+embeddings:
+  model: BAAI/bge-m3
+
+reranker:
+  model: BAAI/bge-reranker-v2-m3
+  enabled: true
+
+retrieval:
+  dense_k: 20
+  sparse_k: 20
+  rrf_k: 60
+  final_k: 8
+
+verifier:
+  nli_model: MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli
+  threshold: 0.75
+  max_regen: 2
+
+temporal:
+  cutoffs:
+    criminal_substantive: "2024-07-01"
+    criminal_procedure: "2024-07-01"
+    evidence: "2024-07-01"
+    labour: "2025-11-21"
+    tax: "2026-04-01"
+
+languages:
+  - en
+  - hi
+  - mr
+  - bn
+  - ta
+  - te
+  - gu
+  - kn
+
+translate:
+  engine: indictrans2
+  fallback_llm: true
+
+vector_store:
+  backend: lancedb
+  path: data/processed/lancedb
+
+ui:
+  page_title: Kautilya
