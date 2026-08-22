@@ -22,5 +22,5 @@ def test_validate_config_passes(capsys: pytest.CaptureFixture[str]) -> None:
 
 
 def test_stub_commands_exit_two() -> None:
-    assert main(["download"]) == 2
+    assert main(["download-scj"]) == 2
     assert main(["ask", "what is cheating"]) == 2

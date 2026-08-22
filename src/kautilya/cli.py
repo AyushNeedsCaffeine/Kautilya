@@ -5,11 +5,11 @@ import sys
 from pathlib import Path
 
 from kautilya import __version__
-from kautilya.config import Settings, load_settings
+from kautilya.config import load_settings
 from kautilya.log import setup_logging
 
 _NOT_IMPLEMENTED = {
-    "download": "Phase 1",
+    "download-scj": "Phase 1b",
     "build-index": "Phase 2",
     "ask": "Phase 3",
     "eval": "Phase 4",
@@ -39,6 +39,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_validate = sub.add_parser("validate-config", help="validate settings.yaml and exit")
     p_validate.set_defaults(func=lambda args, s=None: validate_config(args.config))
 
+    p_ingest = sub.add_parser("ingest", help="normalize central-legislation parquet to JSONL")
+    p_ingest.add_argument("--parquet", type=Path,
+                          default=Path("data/raw/in_central_legislation.parquet"))
+    p_ingest.add_argument("--out", type=Path, default=Path("data/processed/statutes"))
+    p_ingest.set_defaults(func=_cmd_ingest)
+
     for name, phase in _NOT_IMPLEMENTED.items():
         p_stub = sub.add_parser(name, help=f"(arrives in {phase})")
         p_stub.add_argument("query", nargs="*", help="free-form arguments for the command")
@@ -50,6 +56,20 @@ def build_parser() -> argparse.ArgumentParser:
 def _stub(phase: str) -> int:
     print(f"not implemented yet — scheduled for {phase}", file=sys.stderr)
     return 2
+
+
+def _cmd_ingest(args: argparse.Namespace) -> int:
+    from kautilya.ingestion.ingest import ingest_legislation, write_report
+
+    report = ingest_legislation(args.parquet, args.out)
+    report_path = Path("reports") / "ingestion_coverage.json"
+    write_report(report, report_path)
+    for short, info in sorted(report.items()):
+        cov = f"{info['coverage']:.1%}" if info.get("coverage") else "-"
+        print(f"  {short:10s} sections={info['sections']:4d} expected="
+              f"{info.get('expected', '-'):>4} coverage={cov}")
+    print(f"coverage report -> {report_path}")
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
