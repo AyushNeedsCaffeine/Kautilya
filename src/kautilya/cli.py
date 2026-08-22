@@ -45,6 +45,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_ingest.add_argument("--out", type=Path, default=Path("data/processed/statutes"))
     p_ingest.set_defaults(func=_cmd_ingest)
 
+    p_pdf = sub.add_parser("ingest-pdf", help="parse a downloaded PDF (crpc|coi) to JSONL")
+    p_pdf.add_argument("doc", choices=["crpc", "coi"])
+    p_pdf.add_argument("--pdf", type=Path, required=True)
+    p_pdf.add_argument("--out", type=Path, default=Path("data/processed/statutes"))
+    p_pdf.set_defaults(func=_cmd_ingest_pdf)
+
     for name, phase in _NOT_IMPLEMENTED.items():
         p_stub = sub.add_parser(name, help=f"(arrives in {phase})")
         p_stub.add_argument("query", nargs="*", help="free-form arguments for the command")
@@ -69,6 +75,16 @@ def _cmd_ingest(args: argparse.Namespace) -> int:
         print(f"  {short:10s} sections={info['sections']:4d} expected="
               f"{info.get('expected', '-'):>4} coverage={cov}")
     print(f"coverage report -> {report_path}")
+    return 0
+
+
+def _cmd_ingest_pdf(args: argparse.Namespace) -> int:
+    from kautilya.ingestion.pdf_parsers import parse_constitution, parse_crpc, write_shards
+
+    parser_fn = {"crpc": parse_crpc, "coi": parse_constitution}[args.doc]
+    provisions = parser_fn(args.pdf)
+    shard = write_shards(provisions, args.out)
+    print(f"{len(provisions)} provisions -> {shard}")
     return 0
 
 
