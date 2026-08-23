@@ -1,62 +1,48 @@
 {
-  "BNS": {
-    "status": "ok",
-    "sections": 351,
-    "expected": 358,
-    "coverage": 0.98
-  },
   "IPC": {
-    "status": "ok",
-    "sections": 532,
-    "expected": 511,
-    "coverage": 1.041
+    "rows": 556,
+    "expected": 511
+  },
+  "BNS": {
+    "rows": 358,
+    "expected": 358
   },
   "BNSS": {
-    "status": "ok",
-    "sections": 525,
-    "expected": 531,
-    "coverage": 0.989
+    "rows": 531,
+    "expected": 531
   },
   "BSA": {
-    "status": "ok",
-    "sections": 166,
-    "expected": 170,
-    "coverage": 0.976
+    "rows": 170,
+    "expected": 170
   },
   "IEA": {
-    "status": "ok",
-    "sections": 175,
-    "expected": 167,
-    "coverage": 1.048
+    "rows": 174,
+    "expected": 167
   },
   "WAGECODE": {
-    "status": "ok",
-    "sections": 67,
-    "expected": 69,
-    "coverage": 0.971
+    "rows": 67,
+    "expected": 69
   },
   "IRCODE": {
-    "status": "ok",
-    "sections": 104,
-    "expected": 106,
-    "coverage": 0.981
+    "rows": 104,
+    "expected": 106
   },
   "SSCODE": {
-    "status": "ok",
-    "sections": 147,
-    "expected": 164,
-    "coverage": 0.896
+    "rows": 147,
+    "expected": 164
   },
   "OSHCODE": {
-    "status": "ok",
-    "sections": 142,
-    "expected": 143,
-    "coverage": 0.993
+    "rows": 142,
+    "expected": 143
   },
   "ITA1961": {
-    "status": "ok",
-    "sections": 445,
-    "expected": 298,
-    "coverage": 1.493
+    "rows": 445,
+    "expected": 298
+  },
+  "_notes": {
+    "IPC": "24 sections patched from devgan.in bare-act mirror (repeal-stubs excluded); see scripts/patch_ipc_gaps.py",
+    "BNS": "7 sections patched from official gazette PDF; see scripts/patch_new_act_gaps.py",
+    "BNSS": "6 sections patched from official gazette PDF",
+    "BSA": "4 sections patched from official gazette PDF"
   }
 }
