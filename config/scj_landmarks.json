@@ -1,0 +1,603 @@
+{
+  "description": "Curated landmark Supreme Court judgments for KautilyaBench. Resolved against s3://indian-supreme-court-judgments metadata/parquet/year=YYYY/metadata.parquet.",
+  "landmarks": [
+    {
+      "name": "Kesavananda Bharati v State of Kerala",
+      "year": 1973,
+      "domain": "constitutional",
+      "search": "Kesavananda Bharati",
+      "verify": [
+        "Kesavananda",
+        "basic structure"
+      ]
+    },
+    {
+      "name": "Golak Nath v State of Punjab",
+      "year": 1967,
+      "domain": "constitutional",
+      "search": "Golak Nath",
+      "verify": [
+        "Golak"
+      ]
+    },
+    {
+      "name": "Shankari Prasad Singh Deo v Union of India",
+      "year": 1951,
+      "domain": "constitutional",
+      "search": "Shankari Prasad",
+      "aliases": [
+        "Sankari Prasad",
+        "Shankari Prasad Constitution"
+      ],
+      "verify": [
+        "first amendment",
+        "Shankari|Sankari"
+      ]
+    },
+    {
+      "name": "Sajjan Singh v State of Rajasthan",
+      "year": 1965,
+      "domain": "constitutional",
+      "search": "Sajjan Singh",
+      "verify": [
+        "Sajjan Singh",
+        "seventeenth|17th amendment"
+      ]
+    },
+    {
+      "name": "Minerva Mills Ltd v Union of India",
+      "year": 1980,
+      "domain": "constitutional",
+      "search": "Minerva Mills",
+      "verify": [
+        "Minerva",
+        "basic structure|42nd"
+      ]
+    },
+    {
+      "name": "Waman Rao v Union of India",
+      "year": 1981,
+      "domain": "constitutional",
+      "search": "Waman Rao",
+      "verify": [
+        "Waman Rao",
+        "ninth schedule"
+      ]
+    },
+    {
+      "name": "I.R. Coelho v State of Tamil Nadu",
+      "year": 2007,
+      "domain": "constitutional",
+      "search": "Coelho",
+      "verify": [
+        "Coelho",
+        "ninth schedule"
+      ]
+    },
+    {
+      "name": "ADM Jabalpur v Shivakant Shukla",
+      "year": 1976,
+      "domain": "constitutional",
+      "search": "Shivakant Shukla",
+      "aliases": [
+        "Shivkant Shukla ADM Jabalpur Special Reference"
+      ],
+      "verify": [
+        "habeas corpus"
+      ]
+    },
+    {
+      "name": "Maneka Gandhi v Union of India",
+      "year": 1978,
+      "domain": "constitutional",
+      "search": "Maneka Gandhi",
+      "verify": [
+        "Maneka",
+        "procedure established by law|article 21"
+      ]
+    },
+    {
+      "name": "Justice K.S. Puttaswamy v Union of India (Privacy)",
+      "year": 2017,
+      "domain": "constitutional",
+      "search": "Puttaswamy",
+      "verify": [
+        "privacy",
+        "Puttaswamy"
+      ]
+    },
+    {
+      "name": "Justice K.S. Puttaswamy v Union of India (Aadhaar)",
+      "year": 2018,
+      "domain": "constitutional",
+      "search": "Puttaswamy Aadhaar",
+      "aliases": [
+        "Aadhaar Justice K.S. Puttaswamy"
+      ],
+      "verify": [
+        "Aadhaar|Aadhar"
+      ]
+    },
+    {
+      "name": "S.R. Bommai v Union of India",
+      "year": 1994,
+      "domain": "constitutional",
+      "search": "Bommai",
+      "verify": [
+        "Bommai",
+        "article 356|president"
+      ]
+    },
+    {
+      "name": "Indra Sawhney v Union of India",
+      "year": 1992,
+      "domain": "constitutional",
+      "search": "Indra Sawhney",
+      "verify": [
+        "Indra Sawhney",
+        "backward|reservation"
+      ]
+    },
+    {
+      "name": "Supreme Court Advocates-on-Record Assn v Union of India (NJAC)",
+      "year": 2015,
+      "domain": "constitutional",
+      "search": "Advocates-on-Record",
+      "verify": [
+        "NJAC|National Judicial Appointments|collegium"
+      ]
+    },
+    {
+      "name": "In re Article 370",
+      "year": 2023,
+      "domain": "constitutional",
+      "search": "Article 370",
+      "verify": [
+        "370",
+        "Jammu and Kashmir"
+      ]
+    },
+    {
+      "name": "Association for Democratic Reforms v Union of India (Electoral Bonds)",
+      "year": 2024,
+      "domain": "constitutional",
+      "search": "Association for Democratic Reforms Union of India",
+      "aliases": [],
+      "force_key": "2024_2_420_616",
+      "verify": [
+        "electoral bond",
+        "Association for Democratic|ADR"
+      ]
+    },
+    {
+      "name": "Joginder Kumar v State of UP",
+      "year": 1994,
+      "domain": "criminal_procedure",
+      "search": "Joginder Kumar",
+      "verify": [
+        "Joginder",
+        "arrest"
+      ]
+    },
+    {
+      "name": "D.K. Basu v State of West Bengal",
+      "year": 1997,
+      "domain": "criminal_procedure",
+      "search": "D.K. Basu",
+      "verify": [
+        "Basu",
+        "custod|arrest"
+      ]
+    },
+    {
+      "name": "Arnesh Kumar v State of Bihar",
+      "year": 2014,
+      "domain": "criminal_procedure",
+      "search": "Arnesh Kumar",
+      "verify": [
+        "Arnesh",
+        "41A|notice"
+      ]
+    },
+    {
+      "name": "Lalita Kumari v Govt of UP",
+      "year": 2014,
+      "domain": "criminal_procedure",
+      "search": "Lalita Kumari",
+      "verify": [
+        "Lalita Kumari",
+        "first information report|fir"
+      ]
+    },
+    {
+      "name": "Satender Kumar Antil v CBI",
+      "year": 2022,
+      "domain": "criminal_procedure",
+      "search": "Satender Kumar Antil",
+      "verify": [
+        "Antil|Satender",
+        "bail"
+      ]
+    },
+    {
+      "name": "Sanjay Chandra v CBI",
+      "year": 2013,
+      "domain": "criminal_procedure",
+      "search": "Sanjay Chandra",
+      "verify": [
+        "Sanjay Chandra",
+        "bail"
+      ]
+    },
+    {
+      "name": "Zahira Habibulla H. Sheikh v State of Gujarat",
+      "year": 2004,
+      "domain": "criminal_procedure",
+      "search": "Zahira Habibulla",
+      "verify": [
+        "Zahira",
+        "retrial|fair trial|bakery"
+      ]
+    },
+    {
+      "name": "Tehseen S. Poonawalla v Union of India",
+      "year": 2018,
+      "domain": "criminal_procedure",
+      "search": "Tehseen Poonawalla",
+      "verify": [
+        "Poonawalla|lynching",
+        "guidelines"
+      ]
+    },
+    {
+      "name": "Bachan Singh v State of Punjab",
+      "year": 1980,
+      "domain": "penal",
+      "search": "Bachan Singh",
+      "window": 2,
+      "force_key": "1983_1_145_371",
+      "verify": [
+        "Bachan Singh",
+        "rarest"
+      ]
+    },
+    {
+      "name": "Machhi Singh v State of Punjab",
+      "year": 1983,
+      "domain": "penal",
+      "search": "Machhi Singh",
+      "aliases": [
+        "Machchi Singh",
+        "Machi Singh"
+      ],
+      "force_key": "1983_3_413_437",
+      "verify": [
+        "Machh[l i]|MACHHL",
+        "rarest|aggravat"
+      ]
+    },
+    {
+      "name": "Mithu v State of Punjab",
+      "year": 1981,
+      "domain": "penal",
+      "search": "Mithu",
+      "verify": [
+        "Mithu",
+        "303"
+      ]
+    },
+    {
+      "name": "Virsa Singh v State of Punjab",
+      "year": 1958,
+      "domain": "penal",
+      "search": "Virsa Singh",
+      "verify": [
+        "Virsa",
+        "murder|300|intention"
+      ]
+    },
+    {
+      "name": "Kedar Nath Singh v State of Bihar",
+      "year": 1962,
+      "domain": "penal",
+      "search": "Kedar Nath Singh",
+      "verify": [
+        "Kedar Nath",
+        "sedition"
+      ]
+    },
+    {
+      "name": "Navtej Singh Johar v Union of India",
+      "year": 2018,
+      "domain": "penal",
+      "search": "Navtej Singh Johar",
+      "verify": [
+        "Navtej",
+        "377"
+      ]
+    },
+    {
+      "name": "Joseph Shine v Union of India",
+      "year": 2018,
+      "domain": "penal",
+      "search": "Joseph Shine",
+      "verify": [
+        "Shine",
+        "adultery|497|498"
+      ]
+    },
+    {
+      "name": "Shreya Singhal v Union of India",
+      "year": 2015,
+      "domain": "penal",
+      "search": "Shreya Singhal",
+      "verify": [
+        "Shreya Singhal",
+        "66A|66 A"
+      ]
+    },
+    {
+      "name": "State of UP v Deoman Upadhyaya",
+      "year": 1960,
+      "domain": "evidence",
+      "search": "Deoman Upadhyaya",
+      "verify": [
+        "Deoman|Upadhyaya",
+        "confession"
+      ]
+    },
+    {
+      "name": "Aghnoo Nagesia v State of Bihar",
+      "year": 1966,
+      "domain": "evidence",
+      "search": "Aghnoo Nagesia",
+      "verify": [
+        "Nagesia",
+        "confession"
+      ]
+    },
+    {
+      "name": "Sharad Birdhichand Sarda v State of Maharashtra",
+      "year": 1984,
+      "domain": "evidence",
+      "search": "Sharad Birdhichand Sarda",
+      "verify": [
+        "Sarda",
+        "circumstantial"
+      ]
+    },
+    {
+      "name": "Hanumant Govind Nargundkar v State of MP",
+      "year": 1952,
+      "domain": "evidence",
+      "search": "Hanumant Govind",
+      "aliases": [
+        "Hanumant Govind Nargundkar"
+      ],
+      "verify": [
+        "Hanumant",
+        "circumstantial"
+      ]
+    },
+    {
+      "name": "Anvar P.V. v P.K. Basheer",
+      "year": 2014,
+      "domain": "evidence",
+      "search": "Anvar P.V.",
+      "verify": [
+        "Anvar",
+        "65B|electronic|certificate"
+      ]
+    },
+    {
+      "name": "Arjun Panditrao Khotkar v Kailash Kushanrao Gorantyal",
+      "year": 2020,
+      "domain": "evidence",
+      "search": "Arjun Panditrao Khotkar",
+      "verify": [
+        "Arjun Panditrao",
+        "65B|certificate|electronic"
+      ]
+    },
+    {
+      "name": "Selvi v State of Karnataka",
+      "year": 2010,
+      "domain": "evidence",
+      "search": "Selvi State of Karnataka",
+      "aliases": [
+        "Selvi"
+      ],
+      "verify": [
+        "Selvi",
+        "narcoa|polygraph"
+      ]
+    },
+    {
+      "name": "Common Cause v Union of India (Euthanasia)",
+      "year": 2018,
+      "domain": "rights",
+      "search": "Common Cause",
+      "force_key": "2018_6_1_386",
+      "verify": [
+        "euthanasia|living will|living-will|Aruna"
+      ]
+    },
+    {
+      "name": "NALSA v Union of India",
+      "year": 2014,
+      "domain": "rights",
+      "search": "National Legal Services Authority",
+      "verify": [
+        "NALSA|transgender",
+        "identity|dignity"
+      ]
+    },
+    {
+      "name": "Shayara Bano v Union of India",
+      "year": 2017,
+      "domain": "rights",
+      "search": "Shayara Bano",
+      "verify": [
+        "Shayara Bano|talaq",
+        "arbitrariness|manifestly"
+      ]
+    },
+    {
+      "name": "Vishaka v State of Rajasthan",
+      "year": 1997,
+      "domain": "rights",
+      "search": "Vishaka",
+      "verify": [
+        "Vishaka",
+        "sexual harassment|harassment"
+      ]
+    },
+    {
+      "name": "Lily Thomas v Union of India",
+      "year": 2013,
+      "domain": "rights",
+      "search": "Lily Thomas",
+      "verify": [
+        "Lily Thomas",
+        "disqualif|8 (4)|8(4)"
+      ]
+    },
+    {
+      "name": "Bangalore Water Supply v A. Rajappa",
+      "year": 1978,
+      "domain": "labour",
+      "search": "Bangalore Water Supply",
+      "verify": [
+        "Bangalore",
+        "industry"
+      ]
+    },
+    {
+      "name": "Bandhua Mukti Morcha v Union of India",
+      "year": 1984,
+      "domain": "labour",
+      "search": "Bandhua Mukti Morcha",
+      "verify": [
+        "Bandhua",
+        "bonded"
+      ]
+    },
+    {
+      "name": "People's Union for Democratic Rights v Union of India",
+      "year": 1982,
+      "domain": "labour",
+      "search": "People's Union for Democratic Rights",
+      "verify": [
+        "Democratic Rights|Asiad",
+        "employ|exploit"
+      ]
+    },
+    {
+      "name": "Olga Tellis v Bombay Municipal Corporation",
+      "year": 1985,
+      "domain": "labour",
+      "search": "Olga Tellis",
+      "verify": [
+        "Olga Tellis|pavement",
+        "livelihood"
+      ]
+    },
+    {
+      "name": "Air India Statutory Corporation v United Labour Union",
+      "year": 1997,
+      "domain": "labour",
+      "search": "Air India Statutory",
+      "verify": [
+        "Air India Statutory",
+        "contract labour"
+      ]
+    },
+    {
+      "name": "Hussainbhai Calicut v Alath Factory Thozhilali Union",
+      "year": 1978,
+      "domain": "labour",
+      "search": "Hussainbhai",
+      "verify": [
+        "Hussainbhai",
+        "employer|cliff"
+      ]
+    },
+    {
+      "name": "McDowell & Co Ltd v Commercial Tax Officer",
+      "year": 1985,
+      "domain": "tax",
+      "search": "McDowell",
+      "aliases": [
+        "MC DOWELL COMPANY COMMERCIAL TAX OFFICER"
+      ],
+      "verify": [
+        "McDowell|Mc Dowell",
+        "tax avoidance|colourable"
+      ]
+    },
+    {
+      "name": "Union of India v Azadi Bachao Andolan",
+      "year": 2003,
+      "domain": "tax",
+      "search": "Azadi Bachao",
+      "verify": [
+        "Azadi Bachao",
+        "treaty|avoidance"
+      ]
+    },
+    {
+      "name": "Vodafone International Holdings BV v Union of India",
+      "year": 2012,
+      "domain": "tax",
+      "search": "Vodafone",
+      "verify": [
+        "Vodafone",
+        "capital gains|retrospective"
+      ]
+    },
+    {
+      "name": "Dhakeswari Cotton Mills Ltd v CIT",
+      "year": 1954,
+      "domain": "tax",
+      "search": "Dhakeswari",
+      "verify": [
+        "Dhakeswari",
+        "assessment"
+      ]
+    },
+    {
+      "name": "CIT v B.C. Srinivasa Setty",
+      "year": 1981,
+      "domain": "tax",
+      "search": "Srinivasa Setty",
+      "verify": [
+        "Srinivasa Setty",
+        "goodwill|charging"
+      ]
+    },
+    {
+      "name": "GVK Industries Ltd v ITO",
+      "year": 2011,
+      "domain": "tax",
+      "search": "GVK Industries",
+      "aliases": [
+        "G V K Industries ITO"
+      ],
+      "force_key": "2011_3_366_436",
+      "verify": [
+        "G\\.?V\\.?K|GVK",
+        "265|extraterritorial|extra-territorial"
+      ]
+    }
+  ],
+  "unavailable": [
+    {
+      "name": "Siddharth v State of UP",
+      "reason": "cheque-dishonour arrest ruling absent from s3 dataset (2020-2023 scanned)"
+    },
+    {
+      "name": "S.G. Vombatkere v Union of India",
+      "reason": "absent from s3 dataset index (checked 1950-2026, all fields)"
+    }
+  ]
+}
