@@ -45,8 +45,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_ingest.add_argument("--out", type=Path, default=Path("data/processed/statutes"))
     p_ingest.set_defaults(func=_cmd_ingest)
 
-    p_pdf = sub.add_parser("ingest-pdf", help="parse a downloaded PDF (crpc|coi) to JSONL")
-    p_pdf.add_argument("doc", choices=["crpc", "coi"])
+    p_pdf = sub.add_parser("ingest-pdf", help="parse a downloaded PDF (crpc|coi|ita2025) to JSONL")
+    p_pdf.add_argument("doc", choices=["crpc", "coi", "ita2025"])
     p_pdf.add_argument("--pdf", type=Path, required=True)
     p_pdf.add_argument("--out", type=Path, default=Path("data/processed/statutes"))
     p_pdf.set_defaults(func=_cmd_ingest_pdf)
@@ -79,9 +79,18 @@ def _cmd_ingest(args: argparse.Namespace) -> int:
 
 
 def _cmd_ingest_pdf(args: argparse.Namespace) -> int:
-    from kautilya.ingestion.pdf_parsers import parse_constitution, parse_crpc, write_shards
+    from kautilya.ingestion.pdf_parsers import (
+        parse_constitution,
+        parse_crpc,
+        parse_ita2025,
+        write_shards,
+    )
 
-    parser_fn = {"crpc": parse_crpc, "coi": parse_constitution}[args.doc]
+    parser_fn = {
+        "crpc": parse_crpc,
+        "coi": parse_constitution,
+        "ita2025": parse_ita2025,
+    }[args.doc]
     provisions = parser_fn(args.pdf)
     shard = write_shards(provisions, args.out)
     print(f"{len(provisions)} provisions -> {shard}")

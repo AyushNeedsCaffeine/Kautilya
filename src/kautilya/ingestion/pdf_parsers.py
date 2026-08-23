@@ -7,6 +7,7 @@ from pathlib import Path
 from kautilya.ingestion.pdf_extract import (
     extract_pdf_text,
     split_constitution,
+    split_ita_sections,
     split_numbered_provisions,
 )
 from kautilya.ingestion.sources import ActSource
@@ -81,6 +82,21 @@ def parse_constitution(pdf_path: Path) -> list[Provision]:
         seen.add(num)
         provisions.append(_make_provision(source, num, title, body))
     logger.info("COI: %d articles parsed", len(provisions))
+    return provisions
+
+
+def parse_ita2025(pdf_path: Path) -> list[Provision]:
+    source = ActSource(
+        "ita2025_pdf", "ITA2025", "Income-tax Act, 2025",
+        "tax", "current",
+        effective_from=date(2026, 4, 1),
+    )
+    text = extract_pdf_text(pdf_path)
+    provisions = [
+        _make_provision(source, num, title, body)
+        for num, title, body in split_ita_sections(text)
+    ]
+    logger.info("ITA2025: %d sections parsed", len(provisions))
     return provisions
 
 
