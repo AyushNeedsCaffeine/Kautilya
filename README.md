@@ -29,7 +29,7 @@ reaches you; ungrounded answers are refused, never guessed.
 ## Quickstart (Phase 0)
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
+python3 -m venv Kautilya-venv && source Kautilya-venv/bin/activate
 pip install -e ".[dev]"
 cp .env.example .env          # add your GEMINI_API_KEY
 pytest
