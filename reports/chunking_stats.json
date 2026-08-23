@@ -1,0 +1,73 @@
+{
+  "config": {
+    "max_tokens": 1200,
+    "chars_per_token": 4
+  },
+  "stats": {
+    "BNS": {
+      "sections": 358,
+      "chunks": 364,
+      "oversized_sections": 4
+    },
+    "BNSS": {
+      "sections": 531,
+      "chunks": 584,
+      "oversized_sections": 9
+    },
+    "BSA": {
+      "sections": 170,
+      "chunks": 171,
+      "oversized_sections": 1
+    },
+    "COI": {
+      "sections": 445,
+      "chunks": 452,
+      "oversized_sections": 7
+    },
+    "CRPC": {
+      "sections": 533,
+      "chunks": 590,
+      "oversized_sections": 18
+    },
+    "IEA": {
+      "sections": 175,
+      "chunks": 181,
+      "oversized_sections": 3
+    },
+    "IPC": {
+      "sections": 556,
+      "chunks": 559,
+      "oversized_sections": 3
+    },
+    "IRCODE": {
+      "sections": 104,
+      "chunks": 118,
+      "oversized_sections": 7
+    },
+    "ITA1961": {
+      "sections": 445,
+      "chunks": 740,
+      "oversized_sections": 110
+    },
+    "ITA2025": {
+      "sections": 543,
+      "chunks": 637,
+      "oversized_sections": 64
+    },
+    "OSHCODE": {
+      "sections": 142,
+      "chunks": 171,
+      "oversized_sections": 11
+    },
+    "SSCODE": {
+      "sections": 147,
+      "chunks": 186,
+      "oversized_sections": 19
+    },
+    "WAGECODE": {
+      "sections": 67,
+      "chunks": 73,
+      "oversized_sections": 4
+    }
+  }
+}

@@ -6,6 +6,11 @@ llm:
 embeddings:
   model: BAAI/bge-m3
 
+chunking:
+  max_tokens: 1200          # approx ceiling per chunk (ARCHITECTURE.md §3)
+  chars_per_token: 4        # cheap estimator; real tokenizer applied at embed time
+  keep_proviso_attached: true
+
 reranker:
   model: BAAI/bge-reranker-v2-m3
   enabled: true

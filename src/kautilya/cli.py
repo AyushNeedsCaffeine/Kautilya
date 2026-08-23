@@ -51,6 +51,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_pdf.add_argument("--out", type=Path, default=Path("data/processed/statutes"))
     p_pdf.set_defaults(func=_cmd_ingest_pdf)
 
+    p_chunks = sub.add_parser("build-chunks", help="section-aware chunks from statute shards")
+    p_chunks.add_argument("--shards", type=Path, default=Path("data/processed/statutes"))
+    p_chunks.add_argument("--out", type=Path, default=Path("data/processed/chunks"))
+    p_chunks.set_defaults(func=_cmd_build_chunks)
+
     for name, phase in _NOT_IMPLEMENTED.items():
         p_stub = sub.add_parser(name, help=f"(arrives in {phase})")
         p_stub.add_argument("query", nargs="*", help="free-form arguments for the command")
@@ -94,6 +99,28 @@ def _cmd_ingest_pdf(args: argparse.Namespace) -> int:
     provisions = parser_fn(args.pdf)
     shard = write_shards(provisions, args.out)
     print(f"{len(provisions)} provisions -> {shard}")
+    return 0
+
+
+def _cmd_build_chunks(args: argparse.Namespace) -> int:
+    import json
+
+    from kautilya.chunking.legal_chunker import ChunkConfig, build_chunks
+
+    cfg = ChunkConfig.from_settings(args.config or Path("config/settings.yaml"))
+    stats = build_chunks(args.shards, args.out, cfg)
+    total = sum(v["chunks"] for v in stats.values())
+    for short, info in sorted(stats.items()):
+        print(f"  {short:9s} sections={info['sections']:4d} chunks={info['chunks']:4d} "
+              f"oversized={info['oversized_sections']}")
+    print(f"total: {total} chunks -> {args.out}")
+    report = Path("reports") / "chunking_stats.json"
+    report.parent.mkdir(exist_ok=True)
+    report.write_text(json.dumps(
+        {"config": {"max_tokens": cfg.max_tokens,
+                    "chars_per_token": cfg.chars_per_token},
+         "stats": stats}, indent=2) + "\n")
+    print(f"chunking report -> {report}")
     return 0
 
 
