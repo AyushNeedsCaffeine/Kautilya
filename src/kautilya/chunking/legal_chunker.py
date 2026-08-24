@@ -235,26 +235,55 @@ def chunk_judgment(text: str, meta: dict, cfg: ChunkConfig) -> list[dict]:
     meta keys: case_id, court, decision_date, citation, petitioner, respondent.
     """
     limit = cfg.max_tokens * cfg.chars_per_token
-    stage_re = re.compile(
-        r"^((?:[A-Z][A-Z\s/&-]{3,80})|(?:(?:I+|Held|Ruling|Judgment|Order)[\s\S]{0,60}?))$"
-    )
     known_stages = {
         "FACTS", "ISSUES", "CONTENTIONS", "SUBMISSIONS", "REASONING", "ANALYSIS",
         "HELD", "RULING", "ORDER", "JUDGMENT", "DISPOSITION", "BACKGROUND",
         "COUNSEL", "CASES CITED", "CONCLUSION", "FINAL ORDER", "OBSERVATIONS",
+        "PROSECUTION CASE", "DEFENCE CASE", "ARGUMENTS", "QUESTION",
+    }
+    roman_re = re.compile(r"^[IVXLC]+\.?$")
+    caps_word_re = re.compile(r"^[A-Z][A-Z\s/&'-]+$")
+    lone_word_stop = {
+        "WITH", "THE", "AND", "FOR", "FROM", "THIS", "THAT", "IN", "ON", "AT",
+        "BY", "OF", "TO", "AS", "IS", "ALL", "ANY", "NOT",
     }
     lines = text.split("\n")
     segments: list[tuple[str, list[str]]] = [("Preamble", [])]
     for line in lines:
         stripped = line.strip()
-        is_stage = (
+        words = stripped.split()
+        is_stage_name = (
             stripped in known_stages
-            or (len(stripped) <= 80 and stage_re.match(stripped) and stripped.isupper())
+            or (
+                len(stripped) > 2
+                and len(stripped) <= 80
+                and len(words) >= 2
+                and all(sum(c.isalpha() for c in w) >= 2 for w in words)
+                and bool(caps_word_re.fullmatch(stripped))
+                and not any(ch.isdigit() for ch in stripped)
+                and not roman_re.match(stripped)
+                and not re.search(r"\b(v\.|vs\.?)\b", stripped)
+                and not (len(words) == 2 and all(w in lone_word_stop for w in words))
+            )
         )
-        if is_stage and segments[-1][1]:
+        if is_stage_name and segments[-1][1]:
             segments.append((stripped.title(), []))
         else:
             segments[-1][1].append(line)
+
+    # merge tiny unknown segments into their predecessor (OCR noise guard);
+    # recognized case-stage labels always survive even if short
+    merged: list[tuple[str, list[str]]] = []
+    for stage, body in segments:
+        if (
+            merged
+            and len("\n".join(body)) < 200
+            and stage.upper().replace(" ", "") not in known_stages
+        ):
+            merged[-1][1].extend(body)
+        else:
+            merged.append((stage, body))
+    segments = merged
 
     head = (
         f"[{meta.get('court', 'Supreme Court of India')} | {meta.get('decision_date', '?')}"

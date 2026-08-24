@@ -1,0 +1,9 @@
+{
+  "chunks": 9681,
+  "dim": 1024,
+  "model": "injected-embedder",
+  "device": "cuda",
+  "persist": "/mnt/d/Projects/GenAI-Starts-here/Kautilya/data/processed/lancedb",
+  "seconds": 5211.5,
+  "table_rows": 9681
+}

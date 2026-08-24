@@ -10,7 +10,6 @@ from kautilya.log import setup_logging
 
 _NOT_IMPLEMENTED = {
     "download-scj": "Phase 1b",
-    "build-index": "Phase 2",
     "ask": "Phase 3",
     "eval": "Phase 4",
 }
@@ -55,6 +54,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_chunks.add_argument("--shards", type=Path, default=Path("data/processed/statutes"))
     p_chunks.add_argument("--out", type=Path, default=Path("data/processed/chunks"))
     p_chunks.set_defaults(func=_cmd_build_chunks)
+
+    p_index = sub.add_parser("build-index", help="embed chunks -> LanceDB + BM25 index")
+    p_index.add_argument("--chunks", type=Path, default=Path("data/processed/chunks"))
+    p_index.add_argument("--persist", type=Path, default=None)
+    p_index.set_defaults(func=_cmd_build_index)
 
     for name, phase in _NOT_IMPLEMENTED.items():
         p_stub = sub.add_parser(name, help=f"(arrives in {phase})")
@@ -121,6 +125,27 @@ def _cmd_build_chunks(args: argparse.Namespace) -> int:
                     "chars_per_token": cfg.chars_per_token},
          "stats": stats}, indent=2) + "\n")
     print(f"chunking report -> {report}")
+    return 0
+
+
+def _cmd_build_index(args: argparse.Namespace) -> int:
+    import json
+
+    from kautilya.indexing.build_index import IndexConfig, build_index, load_chunks
+
+    cfg = IndexConfig.from_settings(args.config or Path("config/settings.yaml"))
+    if args.persist:
+        cfg = IndexConfig(model=cfg.model, persist=args.persist,
+                          batch_size=cfg.batch_size, device=cfg.device,
+                          dtype=cfg.dtype)
+    chunks = load_chunks(args.chunks)
+    print(f"loaded {len(chunks)} chunks; embedding with {cfg.model} ...")
+    stats = build_index(chunks, cfg)
+    print(f"lancedb rows={stats['table_rows']} dim={stats['dim']} "
+          f"in {stats['seconds']}s -> {cfg.persist}")
+    report = Path("reports") / "index_stats.json"
+    report.write_text(json.dumps(stats, indent=2) + "\n")
+    print(f"index report -> {report}")
     return 0
 
 

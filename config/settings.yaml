@@ -5,6 +5,9 @@ llm:
 
 embeddings:
   model: BAAI/bge-m3
+  device: auto              # auto -> cuda if available else cpu
+  dtype: float16            # fp16 on GPU keeps bge-m3 (~1.1GB) well within 4GB VRAM
+  batch_size: 32
 
 chunking:
   max_tokens: 1200          # approx ceiling per chunk (ARCHITECTURE.md §3)
