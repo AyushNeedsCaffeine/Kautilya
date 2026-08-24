@@ -174,5 +174,5 @@ def search_bm25(query: str, k: int, persist: Path) -> list[tuple[str, float]]:
     bm25 = bm25s.BM25.load(str(persist / "bm25"))  # classmethod -> new instance
     ids = json.loads((persist / "bm25" / "corpus_ids.json").read_text())
     q = bm25s.tokenize([query], stopwords=None, show_progress=False)
-    results, scores = bm25.retrieve(q, k=k, show_progress=False)
+    results, scores = bm25.retrieve(q, k=min(k, len(ids)), show_progress=False)
     return [(ids[int(i)], float(s)) for i, s in zip(results[0], scores[0])]

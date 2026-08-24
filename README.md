@@ -45,7 +45,8 @@ kautilya --help
 | 2a–2b | Section-aware chunker + hybrid index (LanceDB + BM25) | ✅ |
 | 3a | QueryAnalyzer (LLM-first, offline fallback) | ✅ |
 | 3b | TemporalResolver (regime routing + old↔new equivalence) | ✅ |
-| 3c–3d | HybridRetriever · dual-register answers | 🔄 |
+| 3c | HybridRetriever (dense+BM25+RRF+GPU reranker) | ✅ |
+| 3d | Dual-register Synthesizer + LangGraph wiring + `ask` CLI | 🔄 |
 | 4 | NLI verification + KautilyaBench evaluation | ⬜ |
 | 5 | UI polish + IndicTrans2 translation + paper | ⬜ |
 
