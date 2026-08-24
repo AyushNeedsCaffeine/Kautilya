@@ -41,10 +41,11 @@ kautilya --help
 | Phase | Scope | State |
 |---|---|---|
 | 0 | Scaffold, config, CLI | ✅ |
-| 1 | Ingestion, parsing, mapping tables | ⬜ |
-| 2 | Indexing + baseline RAG | ⬜ |
-| 3 | USP features (temporal / dual-register / multilingual) | ⬜ |
-| 4 | KautilyaBench + evaluation | ⬜ |
-| 5 | UI polish + paper | ⬜ |
+| 1a–1e | Ingestion, parsing, temporal mapping tables | ✅ |
+| 2a–2b | Section-aware chunker + hybrid index (LanceDB + BM25) | ✅ |
+| 3a | QueryAnalyzer (LLM-first, offline fallback) | ✅ |
+| 3b–3d | TemporalResolver · HybridRetriever · dual-register answers | 🔄 |
+| 4 | NLI verification + KautilyaBench evaluation | ⬜ |
+| 5 | UI polish + IndicTrans2 translation + paper | ⬜ |
 
 *Informational purposes only — not legal advice.*
