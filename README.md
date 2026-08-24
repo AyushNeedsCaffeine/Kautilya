@@ -44,7 +44,8 @@ kautilya --help
 | 1a–1e | Ingestion, parsing, temporal mapping tables | ✅ |
 | 2a–2b | Section-aware chunker + hybrid index (LanceDB + BM25) | ✅ |
 | 3a | QueryAnalyzer (LLM-first, offline fallback) | ✅ |
-| 3b–3d | TemporalResolver · HybridRetriever · dual-register answers | 🔄 |
+| 3b | TemporalResolver (regime routing + old↔new equivalence) | ✅ |
+| 3c–3d | HybridRetriever · dual-register answers | 🔄 |
 | 4 | NLI verification + KautilyaBench evaluation | ⬜ |
 | 5 | UI polish + IndicTrans2 translation + paper | ⬜ |
 
