@@ -8,6 +8,7 @@ fusion time with a relax-once-on-empty fallback.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Protocol
 
@@ -34,6 +35,35 @@ _ACTS_FOR: dict[tuple[str, str], set[str]] = {
 }
 _ALWAYS_IN = {"SCJ", "COI"}          # judgments + constitution always searchable
 _LABOUR_CODES = {"IRCODE", "OSHCODE", "SSCODE", "WAGECODE"}
+
+# structured hints: "section 76 of Indian Penal Code" -> ("IPC", "76")
+_ACT_ALIASES: list[tuple[tuple[str, ...], str]] = [
+    (("indian penal code", "penal code"), "IPC"),
+    (("bharatiya nyaya sanhita", "nyaya sanhita"), "BNS"),
+    (("nagarik suraksha sanhita", "suraksha sanhita",
+      "criminal procedure"), "BNSS"),
+    (("bharatiya sakshya adhiniyam", "sakshya adhiniyam", "sakshya"),
+     "BSA"),
+    (("evidence act", "indian evidence"), "IEA"),
+    (("income-tax act, 2025", "income tax act 2025", "income-tax act 2025"),
+     "ITA2025"),
+    (("constitution",), "COI"),
+]
+_SECTION_HINT_RE = re.compile(
+    r"\bsections?\s+(no\.\s*)?(\d{1,3}[A-Z]{0,2})\b", re.IGNORECASE)
+
+
+def section_hint(query: str) -> tuple[str | None, str | None]:
+    """(act_short, section_no) when the query pins an exact provision."""
+    m = _SECTION_HINT_RE.search(query)
+    if not m:
+        return None, None
+    sec = m.group(2)
+    low = query.lower()
+    for aliases, act in _ACT_ALIASES:
+        if any(a in low for a in aliases):
+            return act, sec
+    return None, sec
 
 
 class Reranker(Protocol):
@@ -201,6 +231,24 @@ class HybridRetriever:
                 pool_ids = keep
             else:
                 log.info("retriever: regime filter empty -> relaxed")
+
+        # structured boost: an exact (act, section) pin belongs at the front
+        hint_act, hint_sec = section_hint(query)
+        if hint_sec:
+            def _matches(cid: str) -> bool:
+                parts = cid.split("_p")[0].split("_s", 1)
+                if len(parts) != 2 or parts[1] != hint_sec:
+                    return False
+                return hint_act is None or parts[0] == hint_act
+
+            # scan the full fusion, not just the pool - pins outrank noise
+            fused_order = [cid for cid, _ in ranked]
+            pinned = [c for c in fused_order if _matches(c)][: self.final_k]
+            if pinned:
+                rest = [c for c in pool_ids if c not in set(pinned)]
+                pool_ids = (pinned + rest)[: max(self.final_k * 3, 24)]
+                log.info("retriever: section hint %s_s%s -> pinned %d",
+                         hint_act or "*", hint_sec, len(pinned))
 
         rows = self._hydrate(pool_ids)
         docs = [(rows[cid]["text"], cid) for cid in pool_ids if cid in rows]

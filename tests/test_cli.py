@@ -23,7 +23,16 @@ def test_validate_config_passes(capsys: pytest.CaptureFixture[str]) -> None:
 
 def test_stub_commands_exit_two() -> None:
     assert main(["download-scj"]) == 2
-    assert main(["eval"]) == 2
+
+
+def test_eval_is_now_real() -> None:
+    import kautilya.cli as cli
+
+    assert "eval" not in cli._NOT_IMPLEMENTED
+    sub = cli.build_parser()._subparsers._group_actions[0].choices
+    assert "eval" in sub
+    helptext = sub["eval"].format_help()
+    assert "--stage" in helptext and "retrieval" in helptext
 
 
 def test_ask_is_now_real() -> None:

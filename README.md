@@ -61,10 +61,27 @@ retrieval refuses instead of guessing.
 | 2a–2b | Section-aware chunker + hybrid index (LanceDB + BM25) | ✅ |
 | 3a–3d | Full pipeline: analyzer · resolver · retriever · synthesizer · `ask` CLI | ✅ |
 | 4a | Verifier: citation-existence gate + mDeBERTa NLI entailment loop | ✅ |
-| 4b | KautilyaBench evaluation harness | ⬜ |
+| 4b | KautilyaBench v1 (115 QA pairs) + `eval` harness — retrieval stage | ✅ |
+| 4c | Full-stage bench run + tuning after human review of golds | ⬜ |
 | 5 | UI polish + IndicTrans2 translation + paper | ⬜ |
 
 *Informational purposes only — not legal advice.*
+
+### KautilyaBench v1 (retrieval stage, n=115)
+`Kautilya-venv/bin/kautilya eval --bench data/bench/draft.jsonl --stage retrieval`
+
+| Metric | Score |
+|---|---|
+| Hit@5 (core subset) | 0.785 |
+| MRR@8 (core) | 0.674 |
+| Temporal routing accuracy | 0.991 |
+| ask-date route accuracy | 0.974 |
+| Section-lookup Hit@5 (`auto_lookup`) | 0.967 |
+
+Highlights: exact `(act, section)` query pins are boosted ahead of fusion;
+regime routing is near-perfect. Known weak spots: romanised-Hindi lexical
+gap (Hit@5 0.25 — LLM reformulation lands with the full stage) and labour-code
+title variance (0.6).
 
 ### Verification (phase 4a)
 Every legal-register sentence carrying a `[chunk_id]` citation is checked by

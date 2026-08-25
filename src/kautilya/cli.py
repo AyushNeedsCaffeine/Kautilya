@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -10,8 +11,63 @@ from kautilya.log import setup_logging
 
 _NOT_IMPLEMENTED = {
     "download-scj": "Phase 1b",
-    "eval": "Phase 4",
 }
+
+
+def _cmd_eval(args: argparse.Namespace) -> int:
+    from kautilya.eval.bench import evaluate, load_bench
+    from kautilya.indexing.build_index import IndexConfig
+    from kautilya.indexing.search import HybridRetriever
+
+    settings = load_settings(args.config or Path("config/settings.yaml"))
+    records = load_bench(args.bench)
+    print(f"bench: {len(records)} records from {args.bench}")
+
+    retriever = pipeline_fn = None
+    if args.stage == "retrieval":
+        idx = IndexConfig.from_settings(args.config or
+                                        Path("config/settings.yaml"))
+        ret = settings.retrieval
+        retriever = HybridRetriever(persist=idx.persist,
+                                    dense_k=ret.dense_k,
+                                    sparse_k=ret.sparse_k, rrf_k=ret.rrf_k,
+                                    final_k=ret.final_k)
+    else:
+        from kautilya.graph.pipeline import run_query
+        from kautilya.graph.verifier import NLIVerifier
+        from kautilya.llm.gemini import GeminiClient
+
+        llm = GeminiClient(model=settings.llm.model,
+                           temperature=settings.llm.temperature)
+        nli = NLIVerifier(settings.verifier.nli_model)
+        idx = IndexConfig.from_settings(args.config or
+                                        Path("config/settings.yaml"))
+        ret = settings.retrieval
+        retr = HybridRetriever(persist=idx.persist, dense_k=ret.dense_k,
+                               sparse_k=ret.sparse_k, rrf_k=ret.rrf_k,
+                               final_k=ret.final_k)
+
+        def pipeline_fn(query, incident_date=None):  # noqa: E306
+            return run_query(query, llm=llm, retriever=retr, nli=nli,
+                             incident_date=incident_date)
+
+    report = evaluate(records, retriever=retriever,
+                      pipeline_fn=pipeline_fn,
+                      final_k=settings.retrieval.final_k,
+                      limit=args.limit,
+                      trace_path=args.trace)
+    report["bench"] = str(args.bench)
+    args.out.write_text(json.dumps(report, indent=2) + "\n")
+    print(json.dumps({k: v for k, v in report.items()
+                      if k != "by_category"}, indent=2))
+    print("\nby category:")
+    for cat, s in report["by_category"].items():
+        print(f"  {cat:<18} n={s['n']:<3} hit5={s['hit5']:<6}"
+              f" temporal={s['temporal_ok']}")
+    print(f"\nreport -> {args.out}")
+    if args.trace:
+        print(f"trace  -> {args.trace}")
+    return 0
 
 
 def validate_config(config: Path | None) -> int:
@@ -69,6 +125,20 @@ def build_parser() -> argparse.ArgumentParser:
     p_ask.add_argument("--no-verify", action="store_true",
                        help="skip NLI verification (faster, unverified)")
     p_ask.set_defaults(func=_cmd_ask)
+
+    p_eval = sub.add_parser("eval",
+                            help="run KautilyaBench (retrieval or full stage)")
+    p_eval.add_argument("--bench", type=Path,
+                        default=Path("data/bench/bench_v1.jsonl"))
+    p_eval.add_argument("--stage", choices=["retrieval", "full"],
+                        default="retrieval")
+    p_eval.add_argument("--limit", type=int, default=None,
+                        help="evaluate only the first N records")
+    p_eval.add_argument("--out", type=Path,
+                        default=Path("reports/bench_report.json"))
+    p_eval.add_argument("--trace", type=Path,
+                        default=Path("reports/bench_trace.jsonl"))
+    p_eval.set_defaults(func=_cmd_eval)
 
     for name, phase in _NOT_IMPLEMENTED.items():
         p_stub = sub.add_parser(name, help=f"(arrives in {phase})")

@@ -77,7 +77,7 @@ def parse_date(text: str) -> str | None:
 
 _PAST_TENSE_CUES = (
     " was ", " were ", " at that time", " back then", " earlier ",
-    " thi ", " tha ", " hui ", " hua ", " pehle",
+    " before ", " thi ", " tha ", " hui ", " hua ", " pehle",
 )
 
 
@@ -94,17 +94,24 @@ _DOMAIN_KEYWORDS: dict[str, tuple[str, ...]] = {
         "murder", "cheating", "cheated", "fraud", "theft", "assault", "hurt",
         "culpable", "kidnap", "dowry", "defamation", "dacoit", "rape",
         "criminal conspiracy", "punishment for", "sedition",
+        "cruelty", "modesty", "personation", "extortion", "mischief",
         "302", "303", "304", "306", "307", "318", "320", "420", "498a",
+        # romanised-Hindi crime terms
+        "hatya", "dhokha", "chori", "dakaity", "balatkar", "dahej",
     ),
     "criminal_procedure": (
         "fir", "bail", "arrest", "police", "chargesheet", "charge sheet",
         "cognizable", "summons", "warrant", "magistrate", "anticipatory",
-        "trial", "investigation", "154", "173", "437", "438", "482", "480",
+        "trial", "investigation", "maintenance", "legal aid",
+        "incrimination", "girftari", "zero fir",
+        "154", "173", "437", "438", "482", "480",
     ),
     "evidence": (
         "evidence", "witness", "admissib", "presumption", "burden of proof",
         "electronic record", "electronic evidence", "digital record",
-        "certificate", "confession", "65b", "63",
+        "certificate", "confession", "relevant fact", "dying declaration",
+        "expert opinion", "opinions of experts",
+        "65b", "63",
     ),
     "labour": (
         "gratuity", "provident", "pf ", "esi", "wages", "salary", "bonus",
