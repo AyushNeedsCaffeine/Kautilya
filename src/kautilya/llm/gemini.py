@@ -17,6 +17,8 @@ from kautilya.log import get_logger
 log = get_logger(__name__)
 
 _FENCE_RE = re.compile(r"^```(?:json)?\s*|\s*```$", re.MULTILINE)
+# AIza... = classic keys; AQ.Ab8... = Google's 2025+ key format
+_KEY_RE = re.compile(r"^(AIza|AQ\.)[A-Za-z0-9_\-]+$")
 
 
 class MissingAPIKeyError(RuntimeError):
@@ -43,10 +45,11 @@ class GeminiClient:
     def client(self):
         if self._client is None:
             key = (os.environ.get("GEMINI_API_KEY") or "").strip()
-            if not key.startswith("AIza"):
+            if not _KEY_RE.match(key):
                 raise MissingAPIKeyError(
-                    "GEMINI_API_KEY missing or not an AIza... key "
-                    "(see .env.example; get one at https://aistudio.google.com/apikey)"
+                    "GEMINI_API_KEY missing or malformed - expected an "
+                    "AIza... or AQ.Ab8... key (see .env.example; get one at "
+                    "https://aistudio.google.com/apikey)"
                 )
             try:
                 from google import genai

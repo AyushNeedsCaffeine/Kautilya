@@ -112,3 +112,10 @@ def test_gemini_key_missing_message(monkeypatch):
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     with pytest.raises(MissingAPIKeyError, match="AIza"):
         GeminiClient().client
+
+
+def test_gemini_accepts_new_key_format(monkeypatch):
+    from kautilya.llm.gemini import GeminiClient
+
+    monkeypatch.setenv("GEMINI_API_KEY", "AQ.Ab8RbG9vZ2xlX2tleV9mb3JtYXQ")
+    assert GeminiClient().client is not None

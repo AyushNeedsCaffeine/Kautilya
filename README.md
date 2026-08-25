@@ -36,6 +36,22 @@ pytest
 kautilya --help
 ```
 
+## Usage
+
+```bash
+kautilya ask "March 2024 mein cheating hui thi - kaunsa section lagega?"
+# -> routes to the OLD regime (pre-2024-07-01), answers from IPC ss.415-420,
+#    both registers, inline citations, old<->new equivalence notes
+
+kautilya ask --date 2025-06-01 "punishment for murder"     # explicit incident date
+kautilya ask --legal-only --json "65B certificate admissibility"
+```
+
+Pipeline: `QueryAnalyzer -> TemporalResolver -> HybridRetriever (dense+BM25+RRF
+-> GPU reranker) -> Synthesizer (dual-register)`. Past-tense questions without
+a date are asked back for one. Answers cite only retrieved chunks; empty
+retrieval refuses instead of guessing.
+
 ## Status
 
 | Phase | Scope | State |
@@ -43,11 +59,8 @@ kautilya --help
 | 0 | Scaffold, config, CLI | ✅ |
 | 1a–1e | Ingestion, parsing, temporal mapping tables | ✅ |
 | 2a–2b | Section-aware chunker + hybrid index (LanceDB + BM25) | ✅ |
-| 3a | QueryAnalyzer (LLM-first, offline fallback) | ✅ |
-| 3b | TemporalResolver (regime routing + old↔new equivalence) | ✅ |
-| 3c | HybridRetriever (dense+BM25+RRF+GPU reranker) | ✅ |
-| 3d | Dual-register Synthesizer + LangGraph wiring + `ask` CLI | 🔄 |
-| 4 | NLI verification + KautilyaBench evaluation | ⬜ |
+| 3a–3d | Full pipeline: analyzer · resolver · retriever · synthesizer · `ask` CLI | ✅ |
+| 4 | NLI verification loop + KautilyaBench evaluation | ⬜ |
 | 5 | UI polish + IndicTrans2 translation + paper | ⬜ |
 
 *Informational purposes only — not legal advice.*

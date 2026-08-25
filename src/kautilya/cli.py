@@ -10,7 +10,6 @@ from kautilya.log import setup_logging
 
 _NOT_IMPLEMENTED = {
     "download-scj": "Phase 1b",
-    "ask": "Phase 3",
     "eval": "Phase 4",
 }
 
@@ -59,6 +58,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_index.add_argument("--chunks", type=Path, default=Path("data/processed/chunks"))
     p_index.add_argument("--persist", type=Path, default=None)
     p_index.set_defaults(func=_cmd_build_index)
+
+    p_ask = sub.add_parser("ask", help="ask a legal question (time-aware, dual-register)")
+    p_ask.add_argument("question", nargs="+")
+    p_ask.add_argument("--date", default=None, help="incident date (YYYY-MM-DD)")
+    p_ask.add_argument("--lang", default=None, help="answer language code (en/hi/...)")
+    p_ask.add_argument("--legal-only", action="store_true")
+    p_ask.add_argument("--simple-only", action="store_true")
+    p_ask.add_argument("--json", action="store_true", dest="as_json")
+    p_ask.set_defaults(func=_cmd_ask)
 
     for name, phase in _NOT_IMPLEMENTED.items():
         p_stub = sub.add_parser(name, help=f"(arrives in {phase})")
@@ -146,6 +154,57 @@ def _cmd_build_index(args: argparse.Namespace) -> int:
     report = Path("reports") / "index_stats.json"
     report.write_text(json.dumps(stats, indent=2) + "\n")
     print(f"index report -> {report}")
+    return 0
+
+
+def _cmd_ask(args: argparse.Namespace) -> int:
+    import json as _json
+
+    from kautilya.graph.pipeline import run_query
+    from kautilya.indexing.build_index import IndexConfig
+    from kautilya.indexing.search import HybridRetriever
+    from kautilya.llm.gemini import GeminiClient
+
+    settings = load_settings(args.config or Path("config/settings.yaml"))
+    llm = GeminiClient(model=settings.llm.model,
+                       temperature=settings.llm.temperature)
+    idx = IndexConfig.from_settings(args.config or Path("config/settings.yaml"))
+    ret = settings.retrieval
+    retriever = HybridRetriever(persist=idx.persist, dense_k=ret.dense_k,
+                                sparse_k=ret.sparse_k, rrf_k=ret.rrf_k,
+                                final_k=ret.final_k)
+    question = " ".join(args.question)
+    print(f"asking: {question!r} ...", flush=True)
+
+    out = run_query(question, llm=llm, retriever=retriever,
+                    incident_date=args.date, final_lang=args.lang)
+
+    if args.as_json:
+        keep = {k: out.get(k) for k in
+                ("query_raw", "input_lang", "domains", "incident_date",
+                 "regimes", "route", "answer_legal", "answer_simple",
+                 "citations")}
+        print(_json.dumps(keep, indent=2, default=str))
+        return 0
+
+    if out.get("route") == "ask_date":
+        print("\nThis looks like a past-incident question but no date was found.")
+        print("Re-run with:  --date YYYY-MM-DD")
+        return 0
+
+    sources = ", ".join(out.get("citations", [])) or "-"
+    print()
+    if not args.simple_only:
+        print("== Legal register ==")
+        print(out.get("answer_legal") or "(refused)")
+    if not args.legal_only:
+        print("\n== Simple register ==")
+        print(out.get("answer_simple") or "(refused)")
+    print(f"\nSources: {sources}")
+    if out.get("equivalences"):
+        for e in out["equivalences"]:
+            print(f"Note: {e.note}")
+    print("\n--- Informational purposes only; not legal advice. ---")
     return 0
 
 
