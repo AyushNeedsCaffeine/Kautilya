@@ -46,6 +46,9 @@ kautilya ask "March 2024 mein cheating hui thi - kaunsa section lagega?"
 kautilya ask --date 2025-06-01 "punishment for murder"     # explicit incident date
 kautilya ask --lang hi "what is section 420?"               # Hindi translation
 kautilya ask --legal-only --json "65B certificate admissibility"
+
+# Streamlit chat UI
+streamlit run src/kautilya/ui/app.py
 ```
 
 Pipeline: `QueryAnalyzer -> TemporalResolver -> HybridRetriever (dense+BM25+RRF
@@ -65,7 +68,7 @@ retrieval refuses instead of guessing.
 | 4b | KautilyaBench v1 (115 QA pairs) + `eval` harness — retrieval stage | ✅ |
 | 4c | Full-stage bench run + tuning after human review of golds | ⬜ |
 | 5a | IndicTrans2 multilingual translation (lazy-load, VRAM eviction) | ✅ |
-| 5b | Streamlit chat UI | ⬜ |
+| 5b | Streamlit chat UI | ✅ |
 | 5c | Paper + final polish | ⬜ |
 
 *Informational purposes only — not legal advice.*

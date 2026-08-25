@@ -13,6 +13,7 @@ dependencies = [
     "PyYAML>=6.0",
     "python-dotenv>=1.0",
     "indictranstoolkit>=1.1",
+    "streamlit>=1.30",
 ]
 
 [project.optional-dependencies]
