@@ -12,6 +12,7 @@ dependencies = [
     "pydantic>=2.7",
     "PyYAML>=6.0",
     "python-dotenv>=1.0",
+    "indictranstoolkit>=1.1",
 ]
 
 [project.optional-dependencies]

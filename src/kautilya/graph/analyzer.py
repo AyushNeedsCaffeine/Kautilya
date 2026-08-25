@@ -188,6 +188,9 @@ def analyze_query(state: dict, llm=None) -> dict:
                 coerced["domains"] + kw_domains) if d != "general"][:3]
             coerced["domains"] = merged or ["general"]
             coerced["query_raw"] = q
+            # Preserve user-provided final_lang (e.g. --lang hi)
+            if state.get("final_lang"):
+                coerced["final_lang"] = state["final_lang"]
             log.info("analyzer: LLM path ok (%s)", coerced["domains"])
             return coerced
         except Exception as e:  # noqa: BLE001 - degrade gracefully
@@ -202,7 +205,8 @@ def analyze_query(state: dict, llm=None) -> dict:
         "entities": [],
         "incident_date": parse_date(q),
         "needs_date": needs_incident_date(q, has_date),
-        "final_lang": lang if lang in SUPPORTED_LANGS else "en",
+        "final_lang": state.get("final_lang") or (
+            lang if lang in SUPPORTED_LANGS else "en"),
     }
     log.info("analyzer: fallback path (%s)", partial["domains"])
     return partial

@@ -30,6 +30,8 @@ class PipelineState(TypedDict, total=False):
     # Verifier (Phase 4)
     verification: str            # pass | fail | skipped
     verification_notes: list[str]
+    # Translator (Phase 5)
+    answer_translated: str | None
 
 
 KNOWN_DOMAINS = (

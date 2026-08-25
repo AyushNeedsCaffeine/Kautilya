@@ -260,7 +260,8 @@ def _cmd_ask(args: argparse.Namespace) -> int:
         keep = {k: out.get(k) for k in
                 ("query_raw", "input_lang", "domains", "incident_date",
                  "regimes", "route", "answer_legal", "answer_simple",
-                 "citations", "verification", "verification_notes")}
+                 "answer_translated", "citations",
+                 "verification", "verification_notes")}
         print(_json.dumps(keep, indent=2, default=str))
         return 0
 
@@ -284,8 +285,13 @@ def _cmd_ask(args: argparse.Namespace) -> int:
         print("== Legal register ==")
         print(out.get("answer_legal") or "(refused)")
     if not args.legal_only:
-        print("\n== Simple register ==")
-        print(out.get("answer_simple") or "(refused)")
+        translated = out.get("answer_translated")
+        if translated and args.lang and args.lang != "en":
+            print(f"\n== Simple register ({args.lang}) ==")
+            print(translated)
+        else:
+            print("\n== Simple register ==")
+            print(out.get("answer_simple") or "(refused)")
     print(f"\nSources: {sources}")
     if out.get("verification") == "pass" and nli is not None:
         print("Verified: every cited claim checked for entailment (NLI).")

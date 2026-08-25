@@ -1,7 +1,7 @@
-"""LangGraph pipeline wiring (ARCHITECTURE.md §2/§4).
+"""LangGraph pipeline wiring (ARCHITECTURE.md section 2/4).
 
 analyze -> resolve --(ask_date)--> END
-                 \--> retrieve -> synthesize -> END
+                 \\-> retrieve -> synthesize -> verify -> translate -> END
 """
 
 from __future__ import annotations
@@ -13,13 +13,35 @@ from kautilya.graph.synthesizer import synthesize
 from kautilya.graph.verifier import NLIVerifier, verify
 from kautilya.indexing.search import HybridRetriever, retrieve_node
 from kautilya.log import get_logger
+from kautilya.translate.indictrans2 import IndicTranslator
 
 log = get_logger(__name__)
+
+
+def translate_node(state: dict, translator: IndicTranslator | None = None) -> dict:
+    """Translate answer_simple into final_lang (after verification passes)."""
+    final_lang = state.get("final_lang") or "en"
+    if final_lang == "en":
+        return {"answer_translated": None}
+    answer = state.get("answer_simple") or ""
+    if not answer or state.get("route") in ("refuse", "ask_date"):
+        return {"answer_translated": None}
+    if translator is None:
+        translator = IndicTranslator()
+    try:
+        translated = translator.translate(answer, "en", final_lang)
+        log.info("translate: %d chars %s -> %d chars %s",
+                 len(answer), "en", len(translated), final_lang)
+        return {"answer_translated": translated}
+    except Exception as e:
+        log.warning("translate failed: %s — falling back to English", e)
+        return {"answer_translated": answer}
 
 
 def build_pipeline(llm=None,
                    retriever: HybridRetriever | None = None,
                    nli: NLIVerifier | None = None,
+                   translator: IndicTranslator | None = None,
                    threshold: float = 0.75,
                    max_regen: int = 2):
     """Compile the graph; inject fakes for tests."""
@@ -32,6 +54,7 @@ def build_pipeline(llm=None,
     g.add_node("synthesize", lambda s: synthesize(s, llm=llm))
     g.add_node("verify", lambda s: verify(s, nli=nli, threshold=threshold,
                                           max_regen=max_regen))
+    g.add_node("translate", lambda s: translate_node(s, translator=translator))
 
     g.set_entry_point("analyze")
     g.add_edge("analyze", "resolve")
@@ -45,8 +68,9 @@ def build_pipeline(llm=None,
     g.add_conditional_edges(
         "verify",
         lambda s: s.get("route") or "pass",
-        {"pass": END, "regenerate": "synthesize", "refuse": END},
+        {"pass": "translate", "regenerate": "synthesize", "refuse": END},
     )
+    g.add_edge("translate", END)
     return g.compile()
 
 
@@ -54,9 +78,11 @@ def run_query(query: str,
               llm=None,
               retriever: HybridRetriever | None = None,
               nli: NLIVerifier | None = None,
+              translator: IndicTranslator | None = None,
               incident_date: str | None = None,
               final_lang: str | None = None) -> dict:
-    app = build_pipeline(llm=llm, retriever=retriever, nli=nli)
+    app = build_pipeline(llm=llm, retriever=retriever, nli=nli,
+                         translator=translator)
     init: dict = {"query_raw": query.strip(), "retries": 0}
     if incident_date:
         init["incident_date"] = incident_date
