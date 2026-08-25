@@ -60,7 +60,16 @@ retrieval refuses instead of guessing.
 | 1a–1e | Ingestion, parsing, temporal mapping tables | ✅ |
 | 2a–2b | Section-aware chunker + hybrid index (LanceDB + BM25) | ✅ |
 | 3a–3d | Full pipeline: analyzer · resolver · retriever · synthesizer · `ask` CLI | ✅ |
-| 4 | NLI verification loop + KautilyaBench evaluation | ⬜ |
+| 4a | Verifier: citation-existence gate + mDeBERTa NLI entailment loop | ✅ |
+| 4b | KautilyaBench evaluation harness | ⬜ |
 | 5 | UI polish + IndicTrans2 translation + paper | ⬜ |
 
 *Informational purposes only — not legal advice.*
+
+### Verification (phase 4a)
+Every legal-register sentence carrying a `[chunk_id]` citation is checked by
+an XNLI model (`MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7`)
+against the cited corpus text (max over retrieved context × framing-stripped
+phrasings). Unsupported claims trigger up to 2 regenerations with verifier
+feedback, then refusal. Invented citations are rejected outright. Skip with
+`--no-verify`.

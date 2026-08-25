@@ -27,6 +27,9 @@ class PipelineState(TypedDict, total=False):
     answer_simple: str
     citations: list[str]       # chunk_ids actually cited
     retries: int
+    # Verifier (Phase 4)
+    verification: str            # pass | fail | skipped
+    verification_notes: list[str]
 
 
 KNOWN_DOMAINS = (

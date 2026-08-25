@@ -10,13 +10,18 @@ from kautilya.graph.analyzer import analyze_query
 from kautilya.graph.resolver import resolve_temporal
 from kautilya.graph.state import PipelineState
 from kautilya.graph.synthesizer import synthesize
+from kautilya.graph.verifier import NLIVerifier, verify
 from kautilya.indexing.search import HybridRetriever, retrieve_node
 from kautilya.log import get_logger
 
 log = get_logger(__name__)
 
 
-def build_pipeline(llm=None, retriever: HybridRetriever | None = None):
+def build_pipeline(llm=None,
+                   retriever: HybridRetriever | None = None,
+                   nli: NLIVerifier | None = None,
+                   threshold: float = 0.75,
+                   max_regen: int = 2):
     """Compile the graph; inject fakes for tests."""
     from langgraph.graph import END, StateGraph
 
@@ -25,6 +30,8 @@ def build_pipeline(llm=None, retriever: HybridRetriever | None = None):
     g.add_node("resolve", resolve_temporal)
     g.add_node("retrieve", lambda s: retrieve_node(s, retriever=retriever))
     g.add_node("synthesize", lambda s: synthesize(s, llm=llm))
+    g.add_node("verify", lambda s: verify(s, nli=nli, threshold=threshold,
+                                          max_regen=max_regen))
 
     g.set_entry_point("analyze")
     g.add_edge("analyze", "resolve")
@@ -34,16 +41,22 @@ def build_pipeline(llm=None, retriever: HybridRetriever | None = None):
         {"ask": END, "continue": "retrieve"},
     )
     g.add_edge("retrieve", "synthesize")
-    g.add_edge("synthesize", END)
+    g.add_edge("synthesize", "verify")
+    g.add_conditional_edges(
+        "verify",
+        lambda s: s.get("route") or "pass",
+        {"pass": END, "regenerate": "synthesize", "refuse": END},
+    )
     return g.compile()
 
 
 def run_query(query: str,
               llm=None,
               retriever: HybridRetriever | None = None,
+              nli: NLIVerifier | None = None,
               incident_date: str | None = None,
               final_lang: str | None = None) -> dict:
-    app = build_pipeline(llm=llm, retriever=retriever)
+    app = build_pipeline(llm=llm, retriever=retriever, nli=nli)
     init: dict = {"query_raw": query.strip(), "retries": 0}
     if incident_date:
         init["incident_date"] = incident_date
@@ -51,6 +64,7 @@ def run_query(query: str,
     if final_lang:
         init["final_lang"] = final_lang
     out = app.invoke(init)
-    log.info("pipeline: route=%s citations=%d", out.get("route"),
+    log.info("pipeline: route=%s verification=%s citations=%d",
+             out.get("route"), out.get("verification"),
              len(out.get("citations", [])))
     return out

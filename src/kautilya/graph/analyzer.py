@@ -168,11 +168,18 @@ def _coerce(raw: dict[str, Any]) -> dict[str, Any]:
 def analyze_query(state: dict, llm=None) -> dict:
     """LangGraph node: `(state) -> partial state`."""
     q = state.get("query_raw", "").strip()
+    kw_domains = detect_domains(q)
 
     if llm is not None:
         try:
             coerced = _coerce(llm.generate_json(
                 ANALYZER_PROMPT.format(query=q)))
+            # Union LLM + keyword signals: retrieval only widens, and a
+            # confident-but-wrong LLM label (e.g. "general" for a cheating
+            # query) must not starve the retriever's act allowlist.
+            merged = [d for d in dict.fromkeys(
+                coerced["domains"] + kw_domains) if d != "general"][:3]
+            coerced["domains"] = merged or ["general"]
             coerced["query_raw"] = q
             log.info("analyzer: LLM path ok (%s)", coerced["domains"])
             return coerced
@@ -184,7 +191,7 @@ def analyze_query(state: dict, llm=None) -> dict:
     partial: dict[str, Any] = {
         "query_raw": q,
         "input_lang": lang,
-        "domains": detect_domains(q),
+        "domains": kw_domains,
         "entities": [],
         "incident_date": parse_date(q),
         "needs_date": needs_incident_date(q, has_date),

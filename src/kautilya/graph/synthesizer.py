@@ -105,6 +105,12 @@ def synthesize(state: dict, llm=None) -> dict:
         sources=_fmt_sources(retrieved),
         query=state.get("query_raw", ""),
     )
+    if state.get("verification") == "fail":
+        notes = "; ".join(state.get("verification_notes") or [])[:400]
+        prompt += ("\n\nIMPORTANT: your previous attempt was rejected by the "
+                   f"verifier for: {notes}. Cite only chunk_ids from the "
+                   "sources above, and state each claim in words that appear "
+                   "(or follow directly) from the cited text.")
     try:
         out = _parse_json(llm.generate(prompt))
     except Exception as e:  # noqa: BLE001

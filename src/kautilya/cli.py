@@ -66,6 +66,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_ask.add_argument("--legal-only", action="store_true")
     p_ask.add_argument("--simple-only", action="store_true")
     p_ask.add_argument("--json", action="store_true", dest="as_json")
+    p_ask.add_argument("--no-verify", action="store_true",
+                       help="skip NLI verification (faster, unverified)")
     p_ask.set_defaults(func=_cmd_ask)
 
     for name, phase in _NOT_IMPLEMENTED.items():
@@ -161,6 +163,7 @@ def _cmd_ask(args: argparse.Namespace) -> int:
     import json as _json
 
     from kautilya.graph.pipeline import run_query
+    from kautilya.graph.verifier import NLIVerifier
     from kautilya.indexing.build_index import IndexConfig
     from kautilya.indexing.search import HybridRetriever
     from kautilya.llm.gemini import GeminiClient
@@ -173,23 +176,36 @@ def _cmd_ask(args: argparse.Namespace) -> int:
     retriever = HybridRetriever(persist=idx.persist, dense_k=ret.dense_k,
                                 sparse_k=ret.sparse_k, rrf_k=ret.rrf_k,
                                 final_k=ret.final_k)
+    nli = None
+    if not args.no_verify:
+        vcfg = settings.verifier
+        nli = NLIVerifier(vcfg.nli_model)
     question = " ".join(args.question)
     print(f"asking: {question!r} ...", flush=True)
 
-    out = run_query(question, llm=llm, retriever=retriever,
+    out = run_query(question, llm=llm, retriever=retriever, nli=nli,
                     incident_date=args.date, final_lang=args.lang)
 
     if args.as_json:
         keep = {k: out.get(k) for k in
                 ("query_raw", "input_lang", "domains", "incident_date",
                  "regimes", "route", "answer_legal", "answer_simple",
-                 "citations")}
+                 "citations", "verification", "verification_notes")}
         print(_json.dumps(keep, indent=2, default=str))
         return 0
 
     if out.get("route") == "ask_date":
         print("\nThis looks like a past-incident question but no date was found.")
         print("Re-run with:  --date YYYY-MM-DD")
+        return 0
+
+    if out.get("route") == "refuse":
+        print("\n== Refused ==")
+        print(out.get("answer_simple") or "Could not verify an answer.")
+        notes = out.get("verification_notes") or []
+        if notes:
+            print("Verifier notes:", "; ".join(n[:100] for n in notes[:3]))
+        print("\n--- Informational purposes only; not legal advice. ---")
         return 0
 
     sources = ", ".join(out.get("citations", [])) or "-"
@@ -201,6 +217,11 @@ def _cmd_ask(args: argparse.Namespace) -> int:
         print("\n== Simple register ==")
         print(out.get("answer_simple") or "(refused)")
     print(f"\nSources: {sources}")
+    if out.get("verification") == "pass" and nli is not None:
+        print("Verified: every cited claim checked for entailment (NLI).")
+    elif out.get("verification") == "pass":
+        print("Verified: citations exist in retrieved context "
+              "(NLI skipped).")
     if out.get("equivalences"):
         for e in out["equivalences"]:
             print(f"Note: {e.note}")

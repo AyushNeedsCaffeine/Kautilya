@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 from typing import Any, Protocol
 
 from kautilya.log import get_logger
@@ -61,15 +62,31 @@ class GeminiClient:
         return self._client
 
     # -- low level ---------------------------------------------------------
-    def generate(self, prompt: str) -> str:
+    def generate(self, prompt: str, retries: int = 3) -> str:
+        """generateContent with backoff on transient 429/5xx."""
         from google.genai import types
 
-        resp = self.client.models.generate_content(
-            model=self.model,
-            contents=prompt,
-            config=types.GenerateContentConfig(temperature=self.temperature),
-        )
-        return resp.text or ""
+        delays = (5.0, 15.0, 30.0)
+        for attempt in range(retries + 1):
+            try:
+                resp = self.client.models.generate_content(
+                    model=self.model,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        temperature=self.temperature),
+                )
+                return resp.text or ""
+            except Exception as e:  # noqa: BLE001 - inspect and re-raise
+                transient = any(t in str(e) for t in
+                                ("503", "429", "UNAVAILABLE",
+                                 "RESOURCE_EXHAUSTED", "overloaded"))
+                if not transient or attempt == retries:
+                    raise
+                wait = delays[min(attempt, len(delays) - 1)]
+                log.warning("gemini: %s; retry %d/%d in %.0fs",
+                            str(e)[:120], attempt + 1, retries, wait)
+                time.sleep(wait)
+        raise RuntimeError("unreachable")  # pragma: no cover
 
     # -- high level --------------------------------------------------------
     def generate_json(self, prompt: str) -> dict[str, Any]:
