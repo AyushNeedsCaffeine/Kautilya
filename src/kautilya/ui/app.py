@@ -1,4 +1,4 @@
-"""Kautilya chat UI — dark theme with custom styling.
+"""Kautilya chat UI — dark theme with startup loading phase.
 
 Run:  Kautilya-venv/bin/streamlit run src/kautilya/ui/app.py
 """
@@ -28,21 +28,36 @@ st.set_page_config(
 
 st.markdown(APP_CSS, unsafe_allow_html=True)
 
-# ── cached resources ───────────────────────────────────────────────────
+# ── settings (load once, fast) ─────────────────────────────────────────
 
-@st.cache_resource(show_spinner="Loading LLM...")
-def _get_llm(provider: str = "gemini"):
+@st.cache_resource(show_spinner=False)
+def _load_settings():
+    from kautilya.config import load_settings
+    return load_settings(Path("config/settings.yaml"))
+
+settings = _load_settings()
+
+# ── LLM (cached per provider) ──────────────────────────────────────────
+
+_llm_cache: dict[str, object] = {}
+
+def _get_llm(provider: str):
+    if provider in _llm_cache:
+        return _llm_cache[provider]
     from kautilya.llm import create_llm
-    from kautilya.graph.pipeline import load_settings
-    settings = load_settings(Path("config/settings.yaml"))
-    return create_llm(provider=provider,
-                      model=settings.llm.model,
-                      temperature=settings.llm.temperature,
-                      config_path="config/settings.yaml"), settings
+    llm = create_llm(
+        provider=provider,
+        model=settings.llm.model if provider == "gemini" else "qwen2.5:3b",
+        temperature=settings.llm.temperature,
+        config_path="config/settings.yaml",
+    )
+    _llm_cache[provider] = llm
+    return llm
 
+# ── heavy resources (lazy, cached) ─────────────────────────────────────
 
-@st.cache_resource(show_spinner="Loading retriever (bge-m3 + reranker)...")
-def _get_retriever(settings):
+@st.cache_resource(show_spinner=False)
+def _get_retriever():
     from kautilya.indexing.build_index import IndexConfig
     from kautilya.indexing.search import HybridRetriever
     idx = IndexConfig.from_settings(Path("config/settings.yaml"))
@@ -53,17 +68,70 @@ def _get_retriever(settings):
         final_k=ret.final_k,
     )
 
-
-@st.cache_resource(show_spinner="Loading NLI verifier...")
-def _get_nli(settings):
+@st.cache_resource(show_spinner=False)
+def _get_nli():
     from kautilya.graph.verifier import NLIVerifier
     return NLIVerifier(settings.verifier.nli_model)
 
-
-@st.cache_resource(show_spinner="Loading translator (IndicTrans2)...")
+@st.cache_resource(show_spinner=False)
 def _get_translator():
     from kautilya.translate.indictrans2 import IndicTranslator
     return IndicTranslator()
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  STARTUP PHASE — show loading progress before chat is enabled
+# ══════════════════════════════════════════════════════════════════════
+
+def _render_startup():
+    """Show loading progress for each model. Returns True when all loaded."""
+    if "models_loaded" not in st.session_state:
+        st.session_state.models_loaded = False
+    if "load_log" not in st.session_state:
+        st.session_state.load_log = []
+
+    if st.session_state.models_loaded:
+        return True
+
+    st.markdown(header_html(), unsafe_allow_html=True)
+
+    st.markdown("""
+    <div style="text-align:center; padding: 20px 0 8px 0;">
+        <p style="color: #9e9e9e; font-family: Inter, sans-serif; font-size: 0.95em;">
+            Loading models — first query takes a minute…
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    progress = st.progress(0, text="Initializing...")
+    log_area = st.empty()
+
+    steps = [
+        ("Retriever (bge-m3 embeddings)", lambda: _get_retriever()),
+        ("NLI Verifier (mDeBERTa)", lambda: _get_nli()),
+        ("Translator (IndicTrans2)", lambda: _get_translator()),
+    ]
+
+    total = len(steps)
+    for i, (label, loader) in enumerate(steps):
+        pct = int((i / total) * 100)
+        progress.progress(pct, text=f"Loading {label}...")
+        log_area.caption(f"⏳ {label}")
+        t0 = time.time()
+        try:
+            loader()
+            elapsed = round(time.time() - t0, 1)
+            st.session_state.load_log.append(f"✅ {label} ({elapsed}s)")
+        except Exception as e:
+            st.session_state.load_log.append(f"⚠️ {label} — {e}")
+
+        # show completed log
+        log_area.caption("\n".join(st.session_state.load_log))
+
+    progress.progress(100, text="All models loaded!")
+    time.sleep(0.3)
+    st.session_state.models_loaded = True
+    st.rerun()
 
 
 # ── sidebar ────────────────────────────────────────────────────────────
@@ -74,8 +142,8 @@ with st.sidebar:
     st.divider()
 
     llm_provider = st.selectbox(
-        "LLM Backend", ["gemini", "ollama"], index=0,
-        help="Gemini requires API key. Ollama runs locally.",
+        "LLM Backend", ["ollama", "gemini"], index=0,
+        help="Ollama runs locally (default). Gemini requires API key.",
     )
 
     st.divider()
@@ -99,7 +167,12 @@ with st.sidebar:
     st.caption("LangGraph + bge-m3 + mDeBERTa + IndicTrans2")
 
 
-# ── header ─────────────────────────────────────────────────────────────
+# ── run startup phase ──────────────────────────────────────────────────
+
+if not _render_startup():
+    st.stop()
+
+# ── header (after models loaded) ───────────────────────────────────────
 
 st.markdown(header_html(), unsafe_allow_html=True)
 
@@ -107,8 +180,6 @@ st.markdown(header_html(), unsafe_allow_html=True)
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
-if "last_result" not in st.session_state:
-    st.session_state.last_result = None
 
 # ── render history ─────────────────────────────────────────────────────
 
@@ -131,27 +202,24 @@ st.session_state.messages.append({"role": "user", "content": query})
 with st.chat_message("user"):
     st.markdown(query)
 
-# ── two-column layout for response ─────────────────────────────────────
+# ── run pipeline ───────────────────────────────────────────────────────
 
 with st.chat_message("assistant"):
-    # loading animation
     loading_html = """
     <div class="loading-container">
         <div class="loading-spinner"></div>
-        <div class="loading-text">Analyzing query…</div>
+        <div class="loading-text">Thinking…</div>
     </div>
     """
     loading_slot = st.empty()
     loading_slot.markdown(loading_html, unsafe_allow_html=True)
-
-    # create a placeholder for the info panel
     info_slot = st.empty()
 
     t0 = time.time()
     try:
-        llm, settings = _get_llm(provider=llm_provider)
-        retriever = _get_retriever(settings)
-        nli = None if no_verify else _get_nli(settings)
+        llm = _get_llm(provider=llm_provider)
+        retriever = _get_retriever()
+        nli = None if no_verify else _get_nli()
         translator = _get_translator()
 
         from kautilya.graph.pipeline import run_query
@@ -202,7 +270,7 @@ with st.chat_message("assistant"):
         )
         st.stop()
 
-    # ── success: answer cards + info panel ─────────────────────────────
+    # ── success ────────────────────────────────────────────────────────
 
     info_slot.markdown(info_panel_html(result), unsafe_allow_html=True)
 
@@ -235,21 +303,18 @@ with st.chat_message("assistant"):
                 )
                 answer_parts.append(simple)
 
-    # ── citations as chips ─────────────────────────────────────────────
-
+    # citations
     citations = result.get("citations") or []
     if citations:
         st.markdown(citation_chips_html(citations), unsafe_allow_html=True)
 
-    # ── verification badge ─────────────────────────────────────────────
-
+    # verification
     verification = result.get("verification")
     badge = status_badge_html(verification)
     if badge:
         st.markdown(badge, unsafe_allow_html=True)
 
-    # ── equivalences ───────────────────────────────────────────────────
-
+    # equivalences
     equivs = result.get("equivalences") or []
     if equivs:
         with st.expander("Regime equivalences (old ↔ new)"):
@@ -257,8 +322,7 @@ with st.chat_message("assistant"):
                 equivalence_table_html(equivs), unsafe_allow_html=True
             )
 
-    # ── latency + disclaimer ───────────────────────────────────────────
-
+    # latency + disclaimer
     st.caption(f"⏱ {latency}s")
     st.markdown(
         '<div class="disclaimer">'
@@ -267,7 +331,6 @@ with st.chat_message("assistant"):
         unsafe_allow_html=True,
     )
 
-    # store assistant response
     full_answer = "\n\n".join(answer_parts)
     st.session_state.messages.append({
         "role": "assistant",
