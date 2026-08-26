@@ -48,6 +48,10 @@ class FakeLLM:
             return self.simplify
         return self.payload
 
+    def generate_json(self, prompt: str) -> dict:
+        raw = self.generate(prompt)
+        return json.loads(raw)
+
 
 class BoomLLM:
     def generate(self, prompt: str) -> str:

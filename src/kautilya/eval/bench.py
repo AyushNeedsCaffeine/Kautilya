@@ -126,8 +126,13 @@ def evaluate(records: list[Record],
 
     rows: list[dict] = []
     t_start = time.time()
+    trace_file = None
+    if trace_path:
+        trace_path.parent.mkdir(parents=True, exist_ok=True)
+        trace_file = trace_path.open("w")
 
-    for n, rec in enumerate(records, start=1):
+    try:
+      for n, rec in enumerate(records, start=1):
         t0 = time.time()
         row: dict = {"id": rec.id, "category": rec.category,
                      "query": rec.query}
@@ -182,15 +187,15 @@ def evaluate(records: list[Record],
             gold=rec.gold_chunk_ids[:3],
         )
         rows.append(row)
+        if trace_file:
+            trace_file.write(json.dumps(row, ensure_ascii=False) + "\n")
+            trace_file.flush()
         if n % progress_every == 0 or n == len(records):
             log.info("bench: %d/%d (%.1fs avg)", n, len(rows),
                      (time.time() - t_start) / n)
-
-    if trace_path:
-        trace_path.parent.mkdir(parents=True, exist_ok=True)
-        with trace_path.open("w") as f:
-            for r in rows:
-                f.write(json.dumps(r, ensure_ascii=False) + "\n")
+    finally:
+        if trace_file:
+            trace_file.close()
 
     scored = [r for r in rows if not r.get("error")]
     n = max(len(scored), 1)

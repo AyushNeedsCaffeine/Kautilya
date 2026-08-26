@@ -132,6 +132,9 @@ class FlakySynthLLM:
             "answer_simple": "Up to seven years and a fine under IPC 420.",
             "citations": ["IPC_s420"], "refused": False})
 
+    def generate_json(self, prompt: str) -> dict:
+        return json.loads(self.generate(prompt))
+
 
 class StubRetriever:
     def retrieve(self, state):

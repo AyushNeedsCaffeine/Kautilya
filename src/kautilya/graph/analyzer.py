@@ -188,6 +188,10 @@ def analyze_query(state: dict, llm=None) -> dict:
                 coerced["domains"] + kw_domains) if d != "general"][:3]
             coerced["domains"] = merged or ["general"]
             coerced["query_raw"] = q
+            # Preserve user-provided incident_date (--date flag / CLI)
+            if state.get("incident_date"):
+                coerced["incident_date"] = state["incident_date"]
+                coerced["needs_date"] = False
             # Preserve user-provided final_lang (e.g. --lang hi)
             if state.get("final_lang"):
                 coerced["final_lang"] = state["final_lang"]

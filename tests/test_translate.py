@@ -130,8 +130,9 @@ class TestPipelineTranslate:
 
         class FakeLLM:
             def generate_json(self, *a, **kw):
-                return {"domains": ["criminal_substantive"],
-                        "entities": [], "route": None}
+                return {"answer_legal": "Under BNS s.420 [BNS_s420].",
+                        "answer_simple": "Cheating is punished.",
+                        "citations": ["BNS_s420"], "refused": False}
             def generate(self, *a, **kw):
                 return _json.dumps({"answer_legal": "Under BNS s.420 [BNS_s420].",
                                     "answer_simple": "Cheating is punished.",

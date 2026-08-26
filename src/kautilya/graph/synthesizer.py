@@ -53,7 +53,7 @@ def _fmt_sources(retrieved: list[dict]) -> str:
             head += f" s.{c['section_no']}"
         if label:
             head += f" | {str(label)[:80]}"
-        blocks.append(f"{head}\n{c.get('text', '')[:2400]}")
+        blocks.append(f"{head}\n{c.get('text', '')[:800]}")
     return "\n\n".join(blocks)
 
 
@@ -61,17 +61,42 @@ def _parse_json(raw: str) -> dict[str, Any]:
     try:
         return json.loads(strip_fences(raw))
     except json.JSONDecodeError:
-        m = json.loads(
-            # last resort: outermost braces
-            raw[raw.index("{"): raw.rindex("}") + 1])
-        return m
+        pass
+    try:
+        m = re.search(r"\{.*\}", raw, re.DOTALL)
+        if m:
+            return json.loads(m.group(0))
+    except (json.JSONDecodeError, ValueError):
+        pass
+    raise ValueError("no JSON object found in response")
+
+
+def _count_syllables(word: str) -> int:
+    w = word.lower().strip()
+    if not w:
+        return 0
+    vowels = "aeiouy"
+    count = 0
+    prev_vowel = False
+    for ch in w:
+        is_v = ch in vowels
+        if is_v and not prev_vowel:
+            count += 1
+        prev_vowel = is_v
+    if w.endswith("e") and count > 1:
+        count -= 1
+    return max(count, 1)
 
 
 def _fk_grade(text: str) -> float:
     try:
-        import textstat
-
-        return float(textstat.flesch_kincaid_grade(text))
+        sentences = [s.strip() for s in re.split(r"[.!?]+", text) if s.strip()]
+        words = text.split()
+        if not sentences or not words:
+            return 0.0
+        asl = len(words) / len(sentences)
+        avg_syl = sum(_count_syllables(w) for w in words) / len(words)
+        return round(0.39 * asl + 11.8 * avg_syl - 15.59, 2)
     except Exception:  # noqa: BLE001 - metric must never break the pipeline
         return 0.0
 
@@ -112,7 +137,7 @@ def synthesize(state: dict, llm=None) -> dict:
                    "sources above, and state each claim in words that appear "
                    "(or follow directly) from the cited text.")
     try:
-        out = _parse_json(llm.generate(prompt))
+        out = llm.generate_json(prompt)
     except Exception as e:  # noqa: BLE001
         log.warning("synthesizer: generation failed (%s)", e)
         return {"route": "refuse", "answer_legal": "", "answer_simple":

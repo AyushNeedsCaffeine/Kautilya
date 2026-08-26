@@ -35,11 +35,10 @@ def _cmd_eval(args: argparse.Namespace) -> int:
     else:
         from kautilya.graph.pipeline import run_query
         from kautilya.graph.verifier import NLIVerifier
-        from kautilya.llm.gemini import GeminiClient
+        from kautilya.llm import create_llm
 
-        llm = GeminiClient(model=settings.llm.model,
-                           temperature=settings.llm.temperature)
-        nli = NLIVerifier(settings.verifier.nli_model)
+        llm = create_llm(provider=args.llm, config_path=args.config)
+        nli = None if args.no_verify else NLIVerifier(settings.verifier.nli_model)
         idx = IndexConfig.from_settings(args.config or
                                         Path("config/settings.yaml"))
         ret = settings.retrieval
@@ -124,6 +123,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_ask.add_argument("--json", action="store_true", dest="as_json")
     p_ask.add_argument("--no-verify", action="store_true",
                        help="skip NLI verification (faster, unverified)")
+    p_ask.add_argument("--llm", choices=["gemini", "ollama"], default=None,
+                       help="LLM backend (default: settings.yaml provider)")
     p_ask.set_defaults(func=_cmd_ask)
 
     p_eval = sub.add_parser("eval",
@@ -138,6 +139,10 @@ def build_parser() -> argparse.ArgumentParser:
                         default=Path("reports/bench_report.json"))
     p_eval.add_argument("--trace", type=Path,
                         default=Path("reports/bench_trace.jsonl"))
+    p_eval.add_argument("--llm", choices=["gemini", "ollama"], default=None,
+                        help="LLM backend (default: settings.yaml provider)")
+    p_eval.add_argument("--no-verify", action="store_true",
+                        help="skip NLI verification (faster, unverified)")
     p_eval.set_defaults(func=_cmd_eval)
 
     for name, phase in _NOT_IMPLEMENTED.items():
@@ -236,11 +241,10 @@ def _cmd_ask(args: argparse.Namespace) -> int:
     from kautilya.graph.verifier import NLIVerifier
     from kautilya.indexing.build_index import IndexConfig
     from kautilya.indexing.search import HybridRetriever
-    from kautilya.llm.gemini import GeminiClient
+    from kautilya.llm import create_llm
 
     settings = load_settings(args.config or Path("config/settings.yaml"))
-    llm = GeminiClient(model=settings.llm.model,
-                       temperature=settings.llm.temperature)
+    llm = create_llm(provider=args.llm, config_path=args.config)
     idx = IndexConfig.from_settings(args.config or Path("config/settings.yaml"))
     ret = settings.retrieval
     retriever = HybridRetriever(persist=idx.persist, dense_k=ret.dense_k,
