@@ -1,0 +1,67 @@
+{
+  "stage": "full",
+  "n_records": 115,
+  "n_errors": 0,
+  "hit5": 0.704,
+  "hit8": 0.748,
+  "hit5_core": 0.757,
+  "mrr8": 0.595,
+  "mrr8_core": 0.639,
+  "citation_precision": 0.528,
+  "n_cited_total": 8,
+  "temporal_accuracy": 0.826,
+  "route_accuracy": 0.965,
+  "refusal_correctness": 0.096,
+  "fk_le_10_rate": 1.0,
+  "fk_median": 9.38,
+  "avg_latency_s": 11.89,
+  "wall_min": 22.8,
+  "by_category": {
+    "ask_date": {
+      "n": 4,
+      "hit5": 0.0,
+      "temporal_ok": 1.0
+    },
+    "auto_lookup": {
+      "n": 30,
+      "hit5": 0.967,
+      "temporal_ok": 1.0
+    },
+    "gap": {
+      "n": 4,
+      "hit5": 0.0,
+      "temporal_ok": 1.0
+    },
+    "hindi": {
+      "n": 8,
+      "hit5": 0.25,
+      "temporal_ok": 1.0
+    },
+    "labour": {
+      "n": 5,
+      "hit5": 0.6,
+      "temporal_ok": 1.0
+    },
+    "landmark": {
+      "n": 18,
+      "hit5": 0.778,
+      "temporal_ok": 1.0
+    },
+    "regime_new": {
+      "n": 21,
+      "hit5": 0.762,
+      "temporal_ok": 1.0
+    },
+    "regime_old": {
+      "n": 21,
+      "hit5": 0.714,
+      "temporal_ok": 0.143
+    },
+    "tax": {
+      "n": 4,
+      "hit5": 0.5,
+      "temporal_ok": 0.5
+    }
+  },
+  "bench": "data/bench/draft.jsonl"
+}
