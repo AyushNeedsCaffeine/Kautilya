@@ -1,0 +1,27 @@
+{
+  "stage": "full",
+  "n_records": 18,
+  "n_errors": 0,
+  "hit5": 0.944,
+  "hit8": 1.0,
+  "hit5_core": 0.944,
+  "mrr8": 0.897,
+  "mrr8_core": 0.897,
+  "citation_precision": 0.912,
+  "n_cited_total": 18,
+  "temporal_accuracy": 1.0,
+  "route_accuracy": 1.0,
+  "refusal_correctness": 0.889,
+  "fk_le_10_rate": 0.889,
+  "fk_median": 6.78,
+  "avg_latency_s": 29.18,
+  "wall_min": 8.8,
+  "by_category": {
+    "auto_lookup": {
+      "n": 18,
+      "hit5": 0.944,
+      "temporal_ok": 1.0
+    }
+  },
+  "bench": "data/bench/remaining2.jsonl"
+}

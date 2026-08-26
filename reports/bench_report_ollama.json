@@ -1,0 +1,94 @@
+{
+  "model": "qwen2.5:3b (Ollama, local)",
+  "total_records": 115,
+  "verification": {
+    "pass": 62,
+    "fail": 26,
+    "refuse": 0
+  },
+  "temporal_accuracy": 0.739,
+  "route_accuracy": 0.93,
+  "refusal_correctness": 0.626,
+  "fk_under_10_rate": 0.86,
+  "avg_fk_grade": 7.93,
+  "avg_citation_precision": 0.695,
+  "hit5_rate": 0.67,
+  "avg_mrr8": 0.574,
+  "avg_latency_s": 24.8,
+  "min_latency_s": 1.1,
+  "max_latency_s": 576.7,
+  "categories": {
+    "ask_date": {
+      "n": 4,
+      "temporal_accuracy": 1.0,
+      "route_accuracy": 0.5,
+      "refusal_correctness": 0.5,
+      "fk_under_10_rate": 0.5,
+      "avg_latency_s": 6.9
+    },
+    "auto_lookup": {
+      "n": 30,
+      "temporal_accuracy": 1.0,
+      "route_accuracy": 1.0,
+      "refusal_correctness": 0.767,
+      "fk_under_10_rate": 0.9,
+      "avg_latency_s": 23.1
+    },
+    "gap": {
+      "n": 4,
+      "temporal_accuracy": 1.0,
+      "route_accuracy": 1.0,
+      "refusal_correctness": 0.75,
+      "fk_under_10_rate": 0.5,
+      "avg_latency_s": 9.9
+    },
+    "hindi": {
+      "n": 8,
+      "temporal_accuracy": 0.875,
+      "route_accuracy": 0.875,
+      "refusal_correctness": 0.625,
+      "fk_under_10_rate": 1.0,
+      "avg_latency_s": 85.0
+    },
+    "labour": {
+      "n": 5,
+      "temporal_accuracy": 1.0,
+      "route_accuracy": 1.0,
+      "refusal_correctness": 0.6,
+      "fk_under_10_rate": 0.8,
+      "avg_latency_s": 17.3
+    },
+    "landmark": {
+      "n": 18,
+      "temporal_accuracy": 1.0,
+      "route_accuracy": 1.0,
+      "refusal_correctness": 0.667,
+      "fk_under_10_rate": 0.944,
+      "avg_latency_s": 16.4
+    },
+    "regime_new": {
+      "n": 21,
+      "temporal_accuracy": 0.81,
+      "route_accuracy": 0.857,
+      "refusal_correctness": 0.476,
+      "fk_under_10_rate": 0.889,
+      "avg_latency_s": 12.6
+    },
+    "regime_old": {
+      "n": 21,
+      "temporal_accuracy": 0.0,
+      "route_accuracy": 1.0,
+      "refusal_correctness": 0.524,
+      "fk_under_10_rate": 0.762,
+      "avg_latency_s": 35.2
+    },
+    "tax": {
+      "n": 4,
+      "temporal_accuracy": 0.0,
+      "route_accuracy": 0.5,
+      "refusal_correctness": 0.75,
+      "fk_under_10_rate": 1.0,
+      "avg_latency_s": 7.9
+    }
+  }
+}
