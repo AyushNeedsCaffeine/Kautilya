@@ -161,7 +161,7 @@ with st.sidebar:
     incident_date = st.date_input("Incident date (optional)", value=None)
     date_str = incident_date.isoformat() if incident_date else None
 
-    no_verify = st.toggle("Skip NLI verification", value=False)
+    no_verify = not st.toggle("Strict NLI verification (slower)", value=False)
 
     st.divider()
     st.caption("LangGraph + bge-m3 + mDeBERTa + IndicTrans2")
@@ -223,11 +223,13 @@ with st.chat_message("assistant"):
         translator = _get_translator()
 
         from kautilya.graph.pipeline import run_query
+        nli_threshold = 0.75 if llm_provider == "gemini" else 0.55
         result = run_query(
             query, llm=llm, retriever=retriever, nli=nli,
             translator=translator,
             incident_date=date_str,
             final_lang=final_lang,
+            threshold=nli_threshold,
         )
         latency = round(time.time() - t0, 1)
         result["_latency"] = latency

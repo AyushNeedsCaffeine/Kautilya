@@ -80,9 +80,12 @@ def run_query(query: str,
               nli: NLIVerifier | None = None,
               translator: IndicTranslator | None = None,
               incident_date: str | None = None,
-              final_lang: str | None = None) -> dict:
+              final_lang: str | None = None,
+              threshold: float = 0.75,
+              max_regen: int = 2) -> dict:
     app = build_pipeline(llm=llm, retriever=retriever, nli=nli,
-                         translator=translator)
+                         translator=translator,
+                         threshold=threshold, max_regen=max_regen)
     init: dict = {"query_raw": query.strip(), "retries": 0}
     if incident_date:
         init["incident_date"] = incident_date

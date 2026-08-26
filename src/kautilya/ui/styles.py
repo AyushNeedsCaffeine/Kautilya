@@ -4,7 +4,7 @@
 NAVY = "#1a1a2e"
 DARK_BG = "#0e1117"
 CARD_BG = "#16213e"
-GOLD = "#e2b714"
+GOLD = "#b8960c"
 GOLD_DIM = "#c9a90e"
 BLUE = "#4fc3f7"
 GREEN = "#4caf50"
@@ -49,7 +49,7 @@ APP_CSS = """
 }
 .app-header .logo {
     font-size: 3em;
-    filter: drop-shadow(0 0 8px rgba(226,183,20,0.3));
+    filter: drop-shadow(0 0 4px rgba(184,150,12,0.2));
 }
 .app-header .title-block h1 {
     font-family: 'Inter', sans-serif;
@@ -80,7 +80,7 @@ APP_CSS = """
     border-radius: 20px;
     letter-spacing: 0.3px;
 }
-.badge-gold { background: rgba(226,183,20,0.15); color: var(--gold); border: 1px solid rgba(226,183,20,0.3); }
+.badge-gold { background: rgba(184,150,12,0.15); color: var(--gold); border: 1px solid rgba(184,150,12,0.3); }
 .badge-blue { background: rgba(79,195,247,0.12); color: var(--blue); border: 1px solid rgba(79,195,247,0.25); }
 .badge-green { background: rgba(76,175,80,0.12); color: var(--green); border: 1px solid rgba(76,175,80,0.25); }
 
@@ -115,7 +115,7 @@ div[data-testid="stChatMessage"]:has(div[data-testid="chatAvatarIcon-user"]) {
 }
 /* assistant messages */
 div[data-testid="stChatMessage"]:has(div[data-testid="chatAvatarIcon-assistant"]) {
-    background: linear-gradient(135deg, rgba(226,183,20,0.06) 0%%, rgba(226,183,20,0.02) 100%%);
+    background: linear-gradient(135deg, rgba(184,150,12,0.06) 0%%, rgba(184,150,12,0.02) 100%%);
     border-left: 3px solid var(--gold);
 }
 
@@ -257,9 +257,9 @@ div[data-testid="stChatMessage"]:has(div[data-testid="chatAvatarIcon-assistant"]
     transition: all 0.3s ease;
 }
 .stage.active {
-    background: rgba(226,183,20,0.1);
+    background: rgba(184,150,12,0.1);
     color: var(--gold);
-    border-color: rgba(226,183,20,0.3);
+    border-color: rgba(184,150,12,0.3);
     animation: pulse 1.5s infinite;
 }
 .stage.done {
@@ -297,7 +297,7 @@ div[data-testid="stChatMessage"]:has(div[data-testid="chatAvatarIcon-assistant"]
     border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 .equiv-table tr:hover td {
-    background: rgba(226,183,20,0.04);
+    background: rgba(184,150,12,0.04);
 }
 .equiv-arrow {
     color: var(--gold);
@@ -355,7 +355,7 @@ div[data-testid="stChatInput"] {
 }
 div[data-testid="stChatInput"]:focus-within {
     border-color: var(--gold);
-    box-shadow: 0 0 0 2px rgba(226,183,20,0.15);
+    box-shadow: 0 0 0 2px rgba(184,150,12,0.15);
 }
 
 /* ── expander ───────────────────────────────────────────────────────── */
