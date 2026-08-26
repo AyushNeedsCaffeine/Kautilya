@@ -1,4 +1,4 @@
-"""Streamlit chat UI for Kautilya — legal RAG over Indian law.
+"""Kautilya chat UI — dark theme with custom styling.
 
 Run:  Kautilya-venv/bin/streamlit run src/kautilya/ui/app.py
 """
@@ -6,26 +6,39 @@ Run:  Kautilya-venv/bin/streamlit run src/kautilya/ui/app.py
 from __future__ import annotations
 
 import sys
+import time
 from pathlib import Path
 
-# ensure src/ is importable when launched via `streamlit run`
 _src = str(Path(__file__).resolve().parents[2])
 if _src not in sys.path:
     sys.path.insert(0, _src)
 
 import streamlit as st
+from kautilya.ui.styles import (
+    APP_CSS, header_html, answer_card_html, citation_chips_html,
+    status_badge_html, equivalence_table_html, info_panel_html,
+)
 
-st.set_page_config(page_title="Kautilya", page_icon="⚖️", layout="centered")
+st.set_page_config(
+    page_title="Kautilya",
+    page_icon="⚖️",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 
-# ── heavy resources (cached across Streamlit reruns) ──────────────────────
+st.markdown(APP_CSS, unsafe_allow_html=True)
+
+# ── cached resources ───────────────────────────────────────────────────
 
 @st.cache_resource(show_spinner="Loading LLM...")
-def _get_llm():
-    from kautilya.llm.gemini import GeminiClient
+def _get_llm(provider: str = "gemini"):
+    from kautilya.llm import create_llm
     from kautilya.graph.pipeline import load_settings
     settings = load_settings(Path("config/settings.yaml"))
-    return GeminiClient(model=settings.llm.model,
-                        temperature=settings.llm.temperature), settings
+    return create_llm(provider=provider,
+                      model=settings.llm.model,
+                      temperature=settings.llm.temperature,
+                      config_path="config/settings.yaml"), settings
 
 
 @st.cache_resource(show_spinner="Loading retriever (bge-m3 + reranker)...")
@@ -34,9 +47,11 @@ def _get_retriever(settings):
     from kautilya.indexing.search import HybridRetriever
     idx = IndexConfig.from_settings(Path("config/settings.yaml"))
     ret = settings.retrieval
-    return HybridRetriever(persist=idx.persist, dense_k=ret.dense_k,
-                           sparse_k=ret.sparse_k, rrf_k=ret.rrf_k,
-                           final_k=ret.final_k)
+    return HybridRetriever(
+        persist=idx.persist, dense_k=ret.dense_k,
+        sparse_k=ret.sparse_k, rrf_k=ret.rrf_k,
+        final_k=ret.final_k,
+    )
 
 
 @st.cache_resource(show_spinner="Loading NLI verifier...")
@@ -51,43 +66,62 @@ def _get_translator():
     return IndicTranslator()
 
 
-# ── sidebar ───────────────────────────────────────────────────────────────
+# ── sidebar ────────────────────────────────────────────────────────────
 
-st.sidebar.title("⚖️ Kautilya")
-st.sidebar.caption("Time-aware legal RAG over Indian law")
+with st.sidebar:
+    st.markdown("### ⚖️ Kautilya")
+    st.caption("Time-aware legal RAG over Indian law")
+    st.divider()
 
-legal_only = st.sidebar.toggle("Legal register only", value=False)
-simple_only = st.sidebar.toggle("Simple register only", value=True)
+    llm_provider = st.selectbox(
+        "LLM Backend", ["gemini", "ollama"], index=0,
+        help="Gemini requires API key. Ollama runs locally.",
+    )
 
-LANGUAGES = {
-    "English": "en", "Hindi": "hi", "Marathi": "mr",
-    "Bengali": "bn", "Tamil": "ta", "Telugu": "te",
-    "Gujarati": "gu", "Kannada": "kn",
-}
-lang_name = st.sidebar.selectbox("Answer language", list(LANGUAGES.keys()),
-                                  index=0)
-final_lang = LANGUAGES[lang_name]
+    st.divider()
+    legal_only = st.toggle("Legal register only", value=False)
+    simple_only = st.toggle("Simple register only", value=True)
 
-incident_date = st.sidebar.date_input("Incident date (optional)", value=None)
-date_str = incident_date.isoformat() if incident_date else None
+    LANGUAGES = {
+        "English": "en", "Hindi": "hi", "Marathi": "mr",
+        "Bengali": "bn", "Tamil": "ta", "Telugu": "te",
+        "Gujarati": "gu", "Kannada": "kn",
+    }
+    lang_name = st.selectbox("Answer language", list(LANGUAGES.keys()), index=0)
+    final_lang = LANGUAGES[lang_name]
 
-no_verify = st.sidebar.toggle("Skip NLI verification", value=False)
+    incident_date = st.date_input("Incident date (optional)", value=None)
+    date_str = incident_date.isoformat() if incident_date else None
 
-st.sidebar.divider()
-st.sidebar.caption("Built with LangGraph + bge-m3 + mDeBERTa + IndicTrans2")
+    no_verify = st.toggle("Skip NLI verification", value=False)
 
-# ── chat history ──────────────────────────────────────────────────────────
+    st.divider()
+    st.caption("LangGraph + bge-m3 + mDeBERTa + IndicTrans2")
+
+
+# ── header ─────────────────────────────────────────────────────────────
+
+st.markdown(header_html(), unsafe_allow_html=True)
+
+# ── session state ──────────────────────────────────────────────────────
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
+if "last_result" not in st.session_state:
+    st.session_state.last_result = None
+
+# ── render history ─────────────────────────────────────────────────────
 
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+        if msg.get("html"):
+            st.markdown(msg["html"], unsafe_allow_html=True)
+        else:
+            st.markdown(msg["content"])
 
-# ── user input ────────────────────────────────────────────────────────────
+# ── chat input ─────────────────────────────────────────────────────────
 
-query = st.chat_input("Ask a legal question about Indian law...")
+query = st.chat_input("Ask a legal question about Indian law…")
 
 if not query:
     st.stop()
@@ -97,93 +131,145 @@ st.session_state.messages.append({"role": "user", "content": query})
 with st.chat_message("user"):
     st.markdown(query)
 
-# ── run pipeline ──────────────────────────────────────────────────────────
+# ── two-column layout for response ─────────────────────────────────────
 
 with st.chat_message("assistant"):
-    with st.spinner("Thinking..."):
-        try:
-            llm, settings = _get_llm()
-            retriever = _get_retriever(settings)
-            nli = None if no_verify else _get_nli(settings)
-            translator = _get_translator()
+    # loading animation
+    loading_html = """
+    <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Analyzing query…</div>
+    </div>
+    """
+    loading_slot = st.empty()
+    loading_slot.markdown(loading_html, unsafe_allow_html=True)
 
-            from kautilya.graph.pipeline import run_query
-            result = run_query(
-                query, llm=llm, retriever=retriever, nli=nli,
-                translator=translator,
-                incident_date=date_str,
-                final_lang=final_lang,
-            )
-        except Exception as exc:
-            st.error(f"Pipeline error: {exc}")
-            st.stop()
+    # create a placeholder for the info panel
+    info_slot = st.empty()
 
-    # ── render result ─────────────────────────────────────────────────
+    t0 = time.time()
+    try:
+        llm, settings = _get_llm(provider=llm_provider)
+        retriever = _get_retriever(settings)
+        nli = None if no_verify else _get_nli(settings)
+        translator = _get_translator()
+
+        from kautilya.graph.pipeline import run_query
+        result = run_query(
+            query, llm=llm, retriever=retriever, nli=nli,
+            translator=translator,
+            incident_date=date_str,
+            final_lang=final_lang,
+        )
+        latency = round(time.time() - t0, 1)
+        result["_latency"] = latency
+    except Exception as exc:
+        loading_slot.empty()
+        st.error(f"Pipeline error: {exc}")
+        st.session_state.messages.append(
+            {"role": "assistant", "content": f"Error: {exc}"}
+        )
+        st.stop()
+
+    loading_slot.empty()
+
+    # ── render result ──────────────────────────────────────────────────
+
     route = result.get("route")
 
     if route == "ask_date":
+        info_slot.markdown(info_panel_html(result), unsafe_allow_html=True)
         st.info("This looks like a past-incident question. "
                 "Please set an incident date in the sidebar and try again.")
         st.session_state.messages.append(
             {"role": "assistant",
-             "content": "Please set an incident date and re-ask."})
+             "content": "Please set an incident date and re-ask."}
+        )
         st.stop()
 
     if route == "refuse":
+        info_slot.markdown(info_panel_html(result), unsafe_allow_html=True)
         note = (result.get("answer_simple")
                 or "Could not verify an answer from the retrieved sources.")
         st.warning(note)
         notes = result.get("verification_notes") or []
         if notes:
-            st.caption("Verifier: " + "; ".join(n[:120] for n in notes[:3]))
-        st.session_state.messages.append({"role": "assistant", "content": note})
+            with st.expander("Verifier details"):
+                for n in notes[:5]:
+                    st.caption(n[:200])
+        st.session_state.messages.append(
+            {"role": "assistant", "content": note}
+        )
         st.stop()
 
-    # ── success: show answer(s) ───────────────────────────────────────
+    # ── success: answer cards + info panel ─────────────────────────────
+
+    info_slot.markdown(info_panel_html(result), unsafe_allow_html=True)
+
     answer_parts: list[str] = []
 
     if not simple_only:
         legal = result.get("answer_legal", "")
         if legal:
-            st.markdown(f"**Legal register:**\n\n{legal}")
+            st.markdown(
+                answer_card_html("legal", "Legal Register", legal),
+                unsafe_allow_html=True,
+            )
             answer_parts.append(legal)
 
     if not legal_only:
-        # show translated version if available, else simple English
         translated = result.get("answer_translated")
         if translated and final_lang != "en":
-            st.markdown(f"**Simple register ({lang_name}):**\n\n{translated}")
+            st.markdown(
+                answer_card_html("simple", f"Simple Register ({lang_name})",
+                                 translated),
+                unsafe_allow_html=True,
+            )
             answer_parts.append(translated)
         else:
             simple = result.get("answer_simple", "")
             if simple:
-                st.markdown(f"**Simple register:**\n\n{simple}")
+                st.markdown(
+                    answer_card_html("simple", "Simple Register", simple),
+                    unsafe_allow_html=True,
+                )
                 answer_parts.append(simple)
 
-    # ── citations / sources ───────────────────────────────────────────
+    # ── citations as chips ─────────────────────────────────────────────
+
     citations = result.get("citations") or []
     if citations:
-        with st.expander(f"Sources ({len(citations)})", expanded=False):
-            for c in citations:
-                st.code(c, language=None)
+        st.markdown(citation_chips_html(citations), unsafe_allow_html=True)
 
-    # ── verification badge ────────────────────────────────────────────
+    # ── verification badge ─────────────────────────────────────────────
+
     verification = result.get("verification")
-    if verification == "pass":
-        st.success("✓ Verified (NLI entailment check passed)")
-    elif verification == "fail":
-        st.warning("Verification failed — answer may contain unsupported claims")
+    badge = status_badge_html(verification)
+    if badge:
+        st.markdown(badge, unsafe_allow_html=True)
 
-    # ── equivalences ──────────────────────────────────────────────────
+    # ── equivalences ───────────────────────────────────────────────────
+
     equivs = result.get("equivalences") or []
     if equivs:
-        notes = "\n".join(f"- {e.note}" for e in equivs)
-        with st.expander("Regime equivalences", expanded=False):
-            st.markdown(notes)
+        with st.expander("Regime equivalences (old ↔ new)"):
+            st.markdown(
+                equivalence_table_html(equivs), unsafe_allow_html=True
+            )
 
-    # ── disclaimer ────────────────────────────────────────────────────
-    st.caption("*For informational purposes only — not legal advice.*")
+    # ── latency + disclaimer ───────────────────────────────────────────
+
+    st.caption(f"⏱ {latency}s")
+    st.markdown(
+        '<div class="disclaimer">'
+        "For informational purposes only — not legal advice."
+        "</div>",
+        unsafe_allow_html=True,
+    )
 
     # store assistant response
     full_answer = "\n\n".join(answer_parts)
-    st.session_state.messages.append({"role": "assistant", "content": full_answer})
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": full_answer,
+    })
