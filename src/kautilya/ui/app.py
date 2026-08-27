@@ -16,7 +16,8 @@ if _src not in sys.path:
 import streamlit as st
 from kautilya.ui.styles import (
     APP_CSS, header_html, answer_card_html, citation_chips_html,
-    status_badge_html, equivalence_table_html, info_panel_html,
+    error_card_html, status_badge_html, equivalence_table_html,
+    info_panel_html,
 )
 
 st.set_page_config(
@@ -50,6 +51,7 @@ def _get_llm(provider: str):
         model=settings.llm.model if provider == "gemini" else "qwen2.5:3b",
         temperature=settings.llm.temperature,
         config_path="config/settings.yaml",
+        retries=1,   # UI must fail fast; eval/CLI keep heavy backoff
     )
     _llm_cache[provider] = llm
     return llm
@@ -255,6 +257,21 @@ with st.chat_message("assistant"):
             {"role": "assistant",
              "content": "Please set an incident date and re-ask."}
         )
+        st.stop()
+
+    if route == "error":
+        info_slot.markdown(info_panel_html(result), unsafe_allow_html=True)
+        err = (result.get("answer_simple")
+               or "The LLM backend failed to produce an answer.")
+        detail = result.get("error") or ""
+        if "Answer generation failed" not in err:
+            err = (f"Answer generation failed via {llm_provider}. "
+                   "Please try again.")
+        st.markdown(error_card_html(err, detail), unsafe_allow_html=True)
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": f"⚠️ {err}",
+        })
         st.stop()
 
     if route == "refuse":

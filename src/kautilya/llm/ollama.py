@@ -29,10 +29,11 @@ class OllamaClient:
     """Lazy Ollama wrapper; talks to a local ``ollama serve`` instance."""
 
     def __init__(self, model: str = "qwen2.5:3b", temperature: float = 0.1,
-                 base_url: str = _BASE_URL):
+                 base_url: str = _BASE_URL, retries: int = 3):
         self.model = model
         self.temperature = temperature
         self.base_url = base_url.rstrip("/")
+        self.retries = retries
         self._http: httpx.Client | None = None
 
     @property
@@ -42,8 +43,9 @@ class OllamaClient:
         return self._http
 
     # -- low level ---------------------------------------------------------
-    def generate(self, prompt: str, retries: int = 3) -> str:
+    def generate(self, prompt: str, retries: int | None = None) -> str:
         """Call ``POST /api/generate`` with backoff on transient errors."""
+        retries = self.retries if retries is None else retries
         delays = (5.0, 15.0, 30.0)
         payload = {
             "model": self.model,
@@ -70,8 +72,8 @@ class OllamaClient:
         raise RuntimeError("unreachable")  # pragma: no cover
 
     # -- high level --------------------------------------------------------
-    def generate_json(self, prompt: str) -> dict[str, Any]:
-        raw = self.generate(prompt)
+    def generate_json(self, prompt: str, retries: int | None = None) -> dict[str, Any]:
+        raw = self.generate(prompt, retries=retries)
         try:
             out = json.loads(strip_fences(raw))
         except json.JSONDecodeError:

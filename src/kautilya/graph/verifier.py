@@ -115,7 +115,7 @@ def verify(state: dict,
            threshold: float = 0.75,
            max_regen: int = 2) -> dict:
     """LangGraph node: `(state) -> partial state`."""
-    if state.get("route") in ("refuse", "ask_date"):
+    if state.get("route") in ("refuse", "ask_date", "error"):
         return {"verification": "skipped"}
 
     answer_legal = state.get("answer_legal", "")

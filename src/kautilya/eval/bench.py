@@ -126,8 +126,13 @@ def _trace_done_ids(trace_path: Path) -> set[str]:
             row = json.loads(line)
         except json.JSONDecodeError:
             continue
-        if row.get("id") and not row.get("error"):
-            done.add(row["id"])
+        if not row.get("id") or row.get("error"):
+            continue
+        answers = str(row.get("answer_simple") or "") + \
+            str(row.get("answer_legal") or "")
+        if "Answer generation failed" in answers:
+            continue
+        done.add(row["id"])
     return done
 
 
@@ -203,6 +208,19 @@ def evaluate(records: list[Record],
             row["error"] = str(e)[:200]
             retrieved, cited = [], []
 
+        # a synthesis failure is NOT a valid refuse: mark it so resume retries
+        if not row.get("error") and pipeline_fn is not None:
+            failed_answers = [
+                a for a in ((row.get("answer_simple") or ""),
+                            (row.get("answer_legal") or ""))
+                if "Answer generation failed" in a]
+            if failed_answers:
+                row["error"] = "synthesis failed (generation error)"
+                if "citations" in row:
+                    row["citations"] = []
+                row["answers_invalid"] = True
+                retrieved, cited = row.get("retrieved_top", []), []
+
         dt = time.time() - t0
         prec, ncited = citation_precision(cited, rec)
         row.update(
@@ -234,13 +252,23 @@ def evaluate(records: list[Record],
     if resume and trace_path and rows:
         # reload the full trace → cumulative report over all completed rows
         all_rows: list[dict] = []
+        _score_keys = ("category", "hit5", "hit8", "mrr8", "cit_prec",
+                       "n_cited", "temporal_ok", "route_ok", "refusal_ok")
         for line in trace_path.open():
             line = line.strip()
-            if line:
-                try:
-                    all_rows.append(json.loads(line))
-                except json.JSONDecodeError:
-                    continue
+            if not line:
+                continue
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            answers = str(row.get("answer_simple") or "") + \
+                str(row.get("answer_legal") or "")
+            if row.get("error") or "Answer generation failed" in answers:
+                continue        # stale/failed rows are retried on next resume
+            if not all(k in row for k in _score_keys):
+                continue        # malformed rows are not completed records
+            all_rows.append(row)
         rows = all_rows
 
     scored = [r for r in rows if not r.get("error")]

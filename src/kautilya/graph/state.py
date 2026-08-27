@@ -19,7 +19,7 @@ class PipelineState(TypedDict, total=False):
     # TemporalResolver
     regimes: dict[str, str]    # domain -> old|new|current|mixed
     equivalences: list[Equivalence]
-    route: str | None          # "ask_date" | "refuse" | None(=continue)
+    route: str | None          # "ask_date" | "refuse" | "error" | None(=continue)
     # HybridRetriever
     retrieved: list[dict]
     # Synthesizer
@@ -27,6 +27,8 @@ class PipelineState(TypedDict, total=False):
     answer_simple: str
     citations: list[str]       # chunk_ids actually cited
     retries: int
+    # hard failure (LLM unavailable/quota) — surfaced as route="error"
+    error: str
     # Verifier (Phase 4)
     verification: str            # pass | fail | skipped
     verification_notes: list[str]

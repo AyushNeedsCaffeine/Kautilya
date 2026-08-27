@@ -125,3 +125,41 @@ def test_evaluate_full_stage_with_fakes(tmp_path):
     assert report["temporal_accuracy"] == 1.0     # only r1 has expectations
     assert report["refusal_correctness"] == 1.0
     assert report["citation_precision"] == 1.0
+
+
+def test_synthesis_failure_disqualified_and_resumed(tmp_path):
+    legit = {"id": "r1", "query": "murder punishment",
+             "category": "regime_old", "gold_chunk_ids": ["IPC_s302"],
+             "expected_regimes": {"criminal_substantive": "old"}}
+    trace = tmp_path / "trace.jsonl"
+    trace.write_text(json.dumps({
+        "id": "r1", "route": "refuse", "regimes": {}, "verification": "n/a",
+        "answer_simple": "Answer generation failed (ClientError). "
+                         "Please try again.",
+        "answer_legal": "", "citations": [], "hit5": True, "hit8": True,
+        "mrr8": 1.0, "cit_prec": 1.0, "n_cited": 0, "temporal_ok": True,
+        "route_ok": False, "refusal_ok": True, "latency_s": 2873.9,
+        "gold": ["IPC_s302"]}) + "\n")
+
+    def pipeline_fn(query, incident_date=None):
+        return {"route": None, "verification": "pass",
+                "retrieved": [{"chunk_id": "IPC_s302"}],
+                "citations": ["IPC_s302"],
+                "regimes": {"criminal_substantive": "old"},
+                "answer_simple": "Jail for life under section 302 IPC.",
+                "answer_legal": "Claim supported [IPC_s302]."}
+
+    # resume must NOT treat the failed row as done -> it reruns r1
+    report = evaluate([Record(id="r1", query="murder punishment",
+                              category="regime_old",
+                              gold_chunk_ids=["IPC_s302"],
+                              incident_date="2024-03-15",
+                              expected_regimes={"criminal_substantive": "old"})],
+                      pipeline_fn=pipeline_fn, final_k=8,
+                      trace_path=trace, resume=True)
+    assert report["n_records"] == 1                  # re-ran the failed row
+    assert report["n_errors"] == 0
+    rows = [json.loads(l) for l in trace.open()]
+    assert len(rows) == 2                            # appended after old row
+    # the last (valid) row carries the real answer
+    assert "Answer generation failed" not in rows[-1]["answer_simple"]

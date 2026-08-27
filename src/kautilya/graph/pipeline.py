@@ -65,10 +65,17 @@ def build_pipeline(llm=None,
     )
     g.add_edge("retrieve", "synthesize")
     g.add_edge("synthesize", "verify")
+
+    def _verify_route(s: dict) -> str:
+        if s.get("route") == "error":
+            return "error"
+        return s.get("route") or "pass"
+
     g.add_conditional_edges(
         "verify",
-        lambda s: s.get("route") or "pass",
-        {"pass": "translate", "regenerate": "synthesize", "refuse": END},
+        _verify_route,
+        {"pass": "translate", "regenerate": "synthesize",
+         "refuse": END, "error": END},
     )
     g.add_edge("translate", END)
     return g.compile()

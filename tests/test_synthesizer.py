@@ -101,8 +101,9 @@ def test_synthesize_empty_retrieval_refuses_without_llm():
 
 def test_synthesize_llm_failure_degrades():
     out = synthesize(_state(), llm=BoomLLM())
-    assert out["route"] == "refuse"
+    assert out["route"] == "error"
     assert "failed" in out["answer_simple"].lower()
+    assert out.get("error")
 
 
 def test_synthesize_fk_retry_simplifies():

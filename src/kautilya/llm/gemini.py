@@ -37,9 +37,11 @@ def strip_fences(text: str) -> str:
 class GeminiClient:
     """Lazy google-genai wrapper; safe to import without the package."""
 
-    def __init__(self, model: str = "gemini-2.0-flash", temperature: float = 0.1):
+    def __init__(self, model: str = "gemini-2.0-flash", temperature: float = 0.1,
+                 retries: int = 6):
         self.model = model
         self.temperature = temperature
+        self.retries = retries
         self._client = None  # created on first use
 
     @property
@@ -62,10 +64,11 @@ class GeminiClient:
         return self._client
 
     # -- low level ---------------------------------------------------------
-    def generate(self, prompt: str, retries: int = 6) -> str:
+    def generate(self, prompt: str, retries: int | None = None) -> str:
         """generateContent with backoff on transient 429/5xx."""
         from google.genai import types
 
+        retries = self.retries if retries is None else retries
         delays = (10.0, 30.0, 60.0, 120.0, 180.0, 300.0)
         for attempt in range(retries + 1):
             try:
@@ -89,8 +92,8 @@ class GeminiClient:
         raise RuntimeError("unreachable")  # pragma: no cover
 
     # -- high level --------------------------------------------------------
-    def generate_json(self, prompt: str) -> dict[str, Any]:
-        raw = self.generate(prompt)
+    def generate_json(self, prompt: str, retries: int | None = None) -> dict[str, Any]:
+        raw = self.generate(prompt, retries=retries)
         try:
             out = json.loads(strip_fences(raw))
         except json.JSONDecodeError:

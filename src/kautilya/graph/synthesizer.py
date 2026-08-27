@@ -140,10 +140,12 @@ def synthesize(state: dict, llm=None) -> dict:
         out = llm.generate_json(prompt)
     except Exception as e:  # noqa: BLE001
         log.warning("synthesizer: generation failed (%s)", e)
-        return {"route": "refuse", "answer_legal": "", "answer_simple":
-                f"Answer generation failed ({type(e).__name__}). "
-                "Please try again.",
-                "citations": []}
+        return {"route": "error",
+                "answer_legal": "",
+                "answer_simple": f"Answer generation failed ({type(e).__name__}). "
+                                 "Please try again.",
+                "citations": [],
+                "error": f"{type(e).__name__}: {e}"}
 
     if out.get("refused"):
         log.info("synthesizer: model refused (%s)", out.get("reason", ""))

@@ -134,6 +134,22 @@ div[data-testid="stChatMessage"]:has(div[data-testid="chatAvatarIcon-assistant"]
 .answer-card.simple {
     border-left: 4px solid var(--blue);
 }
+.answer-card.error-card {
+    border-left: 4px solid #ef5350;
+    background: rgba(239, 83, 80, 0.08);
+    border-color: rgba(239, 83, 80, 0.35);
+}
+.answer-card.error-card h4 { color: #ef5350; }
+.answer-card.error-card .content { color: #ffaaaa; }
+.answer-card .error-detail {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed rgba(239, 83, 80, 0.35);
+    color: #d98080;
+    font-size: 0.82em;
+    font-family: 'JetBrains Mono', monospace;
+    word-break: break-word;
+}
 .answer-card h4 {
     font-family: 'Inter', sans-serif;
     font-weight: 600;
@@ -430,6 +446,18 @@ def answer_card_html(register: str, title: str, content: str) -> str:
 <div class="answer-card {css_class}">
     <h4>{title}</h4>
     <div class="content">{content}</div>
+</div>
+"""
+
+
+def error_card_html(error: str, detail: str = "") -> str:
+    """Render a styled error card for LLM/answer failures."""
+    detail_html = f'<div class="error-detail">{detail}</div>' if detail else ""
+    return f"""
+<div class="answer-card error-card">
+    <h4>&#9888;&#65039; Could not generate the answer</h4>
+    <div class="content">{error}</div>
+    {detail_html}
 </div>
 """
 
