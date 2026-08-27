@@ -336,27 +336,32 @@ Key observations: temporal routing is near-perfect (0.991) because the cutoff-ba
 
 \begin{table}[h]
 \centering
-\caption{Full-Stage Results (Gemini Flash, n=115)}
+\caption{Full-Stage Results (n=115; Gemini sample n=11)}
 \label{tab:full}
-\begin{tabular}{@{}lr@{}}
+\begin{tabular}{@{}lrr@{}}
 \toprule
-\textbf{Metric} & \textbf{Score} \\
+\textbf{Metric} & \textbf{Qwen2.5-3B (Ollama)} & \textbf{Gemini Flash} \\
 \midrule
-Hit@5 (core) & 0.785 \\
-Temporal routing accuracy & 0.991 \\
-Citation precision & --- \\
-FK $\leq$ 10 rate & --- \\
+Hit@5 (core) & 0.720 & 1.000 \\
+MRR@8 (core) & 0.617 & 0.955 \\
+Citation precision & 0.588 & 0.430 \\
+Temporal routing accuracy & 0.739 & 1.000 \\
+Route accuracy & 0.930 & 1.000 \\
+FK $\leq$ 10 rate & 0.860 & 0.909 \\
+Avg. latency & 24.8\,s & 129.2\,s$^*$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The full-stage evaluation generates dual-register answers through the LLM and verifies them with the NLI pipeline. Due to API rate limits during evaluation, we also ran the pipeline on a local LLM (Qwen2.5-3B via Ollama) to validate end-to-end functionality.
+$^*$Gemini runs under daily free-tier API quotas ($\sim$20 requests/day); the sample was limited to 11 records before the quota reset interval, and latency includes the inter-record pacing delay. The retrieval and routing metrics for the full 115-record set are reported in Table~\ref{tab:retrieval}.
+
+The full-stage evaluation generates dual-register answers through the LLM and verifies them with the NLI pipeline. Two LLM backends were evaluated: a freely deployable local model (Qwen2.5-3B via Ollama) on all 115 records, and a frontier API model (Gemini Flash) on an 11-record quota-limited sample. The local backend shows a visible strength/cost trade-off: it sustains end-to-end retrieval (Hit@5 core 0.720) but loses temporal fidelity --- the 3B model defaults past-incident questions to the current regime (regime-\texttt{old} temporal accuracy 0.0\%), whereas Gemini routes both regimes perfectly on the sampled records. Citation precision is lower in both backends than in retrieval-only evaluation, because the synthesizer occasionally cites related provisions that the benchmark labels narrow.
 
 %% ======================================================================
 \section{Discussion}
 \label{sec:discussion}
 
-\textbf{Temporal routing as a legal requirement.} Our temporal resolver achieves 0.991 accuracy---the single error being a tax-domain edge case where the IT Act 2025's effective date is ambiguous for certain provisions. This near-perfect accuracy is because temporal routing is implemented as a deterministic mapping (date $\rightarrow$ regime) rather than an LLM-dependent classification, making it both reliable and auditable.
+\textbf{Temporal routing as a legal requirement.} Our temporal resolver is deterministic: given an incident date and a domain, the mapping is exact and auditable, scoring 0.991 in retrieval-only evaluation (Table~\ref{tab:retrieval}). The end-to-end route depends on the upstream analyzer correctly extracting the incident date; a small 3B local model frequently treats date-free questions as current-regime and scores 0.0\% on regime-\texttt{old} temporal routing, while a frontier model preserves the exact mapping on the sampled records. This confirms that the resolver itself is sound --- the failure is an LLM-capacity one, not a routing-design one.
 
 \textbf{Dual-register simplification.} The FK grade target of $\leq$ 10 is achieved for most answers when the simplification retry is triggered. The key insight is that legal language and plain language require different vocabulary but can share the same citation structure. By producing both registers from the same verified evidence, we ensure simplification never introduces hallucinated claims.
 
@@ -374,7 +379,7 @@ The full-stage evaluation generates dual-register answers through the LLM and ve
 \section{Conclusion}
 \label{sec:conclusion}
 
-Kautilya demonstrates that time-aware regime routing, dual-register answers, and Indic multilingual output can be combined in a single legal RAG system with citation-verified answers. The temporal resolver's deterministic design achieves near-perfect accuracy (0.991), the section-aware chunker and hybrid retriever achieve Hit@5 of 0.785 on core targets, and the NLI verifier ensures all cited claims are grounded in retrieved statutory text.
+Kautilya demonstrates that time-aware regime routing, dual-register answers, and Indic multilingual output can be combined in a single legal RAG system with citation-verified answers. The temporal resolver's deterministic design achieves near-perfect accuracy in retrieval-only evaluation (0.991), the section-aware chunker and hybrid retriever achieve Hit@5 of 0.785 on core targets, and the dual-register synthesis is verified by an NLI entailment gate. The system runs on both frontier API models and a 4\,GB-GPU local backend, with the local model trading temporal fidelity for zero-cost deployment.
 
 We release KautilyaBench (115 annotated QA pairs) as a benchmark for Indian legal QA, and the full system as open-source software supporting both cloud and local LLM backends. Future work includes expanding to state-level legislation, improving cross-lingual retrieval for Indian languages, and adding support for staggered effective dates in the temporal resolver.
 

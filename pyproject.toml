@@ -14,6 +14,14 @@ dependencies = [
     "python-dotenv>=1.0",
     "indictranstoolkit>=1.1",
     "streamlit>=1.30",
+    "langgraph>=1.0",
+    "lancedb>=0.36",
+    "bm25s>=0.2",
+    "sentence-transformers>=3.0",
+    "torch>=2.4",
+    "transformers>=4.45",
+    "google-genai>=0.4",
+    "httpx>=0.27",
 ]
 
 [project.optional-dependencies]

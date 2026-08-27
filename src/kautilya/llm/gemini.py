@@ -62,11 +62,11 @@ class GeminiClient:
         return self._client
 
     # -- low level ---------------------------------------------------------
-    def generate(self, prompt: str, retries: int = 3) -> str:
+    def generate(self, prompt: str, retries: int = 6) -> str:
         """generateContent with backoff on transient 429/5xx."""
         from google.genai import types
 
-        delays = (5.0, 15.0, 30.0)
+        delays = (10.0, 30.0, 60.0, 120.0, 180.0, 300.0)
         for attempt in range(retries + 1):
             try:
                 resp = self.client.models.generate_content(

@@ -212,5 +212,9 @@ def analyze_query(state: dict, llm=None) -> dict:
         "final_lang": state.get("final_lang") or (
             lang if lang in SUPPORTED_LANGS else "en"),
     }
+    # Preserve user-provided incident_date (CLI --date flag, eval gold date)
+    if state.get("incident_date"):
+        partial["incident_date"] = state["incident_date"]
+        partial["needs_date"] = False
     log.info("analyzer: fallback path (%s)", partial["domains"])
     return partial

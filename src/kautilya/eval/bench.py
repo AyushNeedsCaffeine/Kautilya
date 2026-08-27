@@ -119,7 +119,8 @@ def evaluate(records: list[Record],
              final_k: int = 8,
              limit: int | None = None,
              trace_path: Path | None = None,
-             progress_every: int = 10) -> dict:
+             progress_every: int = 10,
+             delay: float = 0.0) -> dict:
     """Run records through one stage; returns aggregate report dict."""
     if limit:
         records = records[:limit]
@@ -190,6 +191,8 @@ def evaluate(records: list[Record],
         if trace_file:
             trace_file.write(json.dumps(row, ensure_ascii=False) + "\n")
             trace_file.flush()
+        if delay:
+            time.sleep(delay)
         if n % progress_every == 0 or n == len(records):
             log.info("bench: %d/%d (%.1fs avg)", n, len(rows),
                      (time.time() - t_start) / n)
