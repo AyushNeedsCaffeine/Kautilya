@@ -55,7 +55,8 @@ def _cmd_eval(args: argparse.Namespace) -> int:
                       final_k=settings.retrieval.final_k,
                       limit=args.limit,
                       trace_path=args.trace,
-                      delay=args.delay)
+                      delay=args.delay,
+                      resume=args.resume)
     report["bench"] = str(args.bench)
     args.out.write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps({k: v for k, v in report.items()
@@ -146,6 +147,8 @@ def build_parser() -> argparse.ArgumentParser:
                         help="skip NLI verification (faster, unverified)")
     p_eval.add_argument("--delay", type=float, default=0.0,
                         help="sleep N seconds between records (rate-limit relief)")
+    p_eval.add_argument("--resume", action="store_true",
+                        help="skip trace-completed records; append; cumulative report")
     p_eval.set_defaults(func=_cmd_eval)
 
     for name, phase in _NOT_IMPLEMENTED.items():

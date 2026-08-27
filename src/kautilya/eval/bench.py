@@ -113,6 +113,24 @@ def refusal_correct(record: Record, out: dict) -> bool:
 
 
 # ------------------------------------------------------------------ runner
+def _trace_done_ids(trace_path: Path) -> set[str]:
+    """Ids already in the trace (successful rows) — skip on resume."""
+    if not trace_path.exists():
+        return set()
+    done: set[str] = set()
+    for line in trace_path.open():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if row.get("id") and not row.get("error"):
+            done.add(row["id"])
+    return done
+
+
 def evaluate(records: list[Record],
              retriever=None,
              pipeline_fn=None,
@@ -120,8 +138,20 @@ def evaluate(records: list[Record],
              limit: int | None = None,
              trace_path: Path | None = None,
              progress_every: int = 10,
-             delay: float = 0.0) -> dict:
-    """Run records through one stage; returns aggregate report dict."""
+             delay: float = 0.0,
+             resume: bool = False) -> dict:
+    """Run records through one stage; returns aggregate report dict.
+
+    With resume=True and an existing trace, previously completed record ids
+    are skipped and new rows append to the trace (rate-limit friendly:
+    nightly batches without re-burning quota on re-runs).
+    """
+    if resume and trace_path:
+        done = _trace_done_ids(trace_path)
+        todo = [r for r in records if r.id not in done]
+        log.info("resume: skipped %d already-trace records, %d remain",
+                 len(records) - len(todo), len(todo))
+        records = todo
     if limit:
         records = records[:limit]
 
@@ -130,7 +160,8 @@ def evaluate(records: list[Record],
     trace_file = None
     if trace_path:
         trace_path.parent.mkdir(parents=True, exist_ok=True)
-        trace_file = trace_path.open("w")
+        trace_file = trace_path.open("a" if (resume and trace_path.exists())
+                                    else "w")
 
     try:
       for n, rec in enumerate(records, start=1):
@@ -199,6 +230,18 @@ def evaluate(records: list[Record],
     finally:
         if trace_file:
             trace_file.close()
+
+    if resume and trace_path and rows:
+        # reload the full trace → cumulative report over all completed rows
+        all_rows: list[dict] = []
+        for line in trace_path.open():
+            line = line.strip()
+            if line:
+                try:
+                    all_rows.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
+        rows = all_rows
 
     scored = [r for r in rows if not r.get("error")]
     n = max(len(scored), 1)
