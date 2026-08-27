@@ -258,7 +258,8 @@ def _cmd_ask(args: argparse.Namespace) -> int:
         vcfg = settings.verifier
         nli = NLIVerifier(vcfg.nli_model)
     question = " ".join(args.question)
-    print(f"asking: {question!r} ...", flush=True)
+    if not args.as_json:
+        print(f"asking: {question!r} ...", flush=True)
 
     out = run_query(question, llm=llm, retriever=retriever, nli=nli,
                     incident_date=args.date, final_lang=args.lang)

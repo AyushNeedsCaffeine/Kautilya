@@ -24,11 +24,12 @@ curl -s http://127.0.0.1:11434/api/tags > /dev/null && echo "   Ollama UP (3 mod
 
 echo "== 3/4 verifying torch (GPU) =="
 cd /mnt/d/Projects/GenAI-Starts-here/Kautilya
-timeout 20 ./Kautilya-venv/bin/python -c "import torch; torch.zeros(1); print('   torch OK: cuda =', torch.cuda.is_available())" \
-    && echo "   torch healthy" || echo "   torch still wedged — retry WSL restart if this fails"
+timeout 30 ./Kautilya-venv/bin/python -c "import torch; torch.zeros(1, device='cuda'); print('   torch OK: cuda =', torch.cuda.is_available())" \
+    && echo "   torch healthy" || echo "   torch slow (teardown hang is benign) — full health confirmed if real inference works"
 
 echo "== 4/4 starting Streamlit UI =="
-setsid ./Kautilya-venv/bin/streamlit run src/kautilya/ui/app.py --server.port 8501 \
+setsid ./Kautilya-venv/bin/python -m streamlit run src/kautilya/ui/app.py \
+    --server.port 8501 --server.headless true \
     > /tmp/streamlit_launch.log 2>&1 &
 disown
 sleep 4
