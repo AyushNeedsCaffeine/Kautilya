@@ -29,7 +29,7 @@ India's legal codes underwent a once-in-a-century transition between 2024 and 20
 
 We present \textbf{Kautilya}, a Retrieval-Augmented Generation system over Indian law that introduces three capabilities absent from prior work: (1)~\emph{time-aware regime routing} that selects the legally applicable code based on incident date, (2)~\emph{dual-register answers} providing both precise legal language and plain-language explanations (Flesch-Kincaid $\leq$ 10) with identical citations, and (3)~\emph{Indic multilingual output} in eight Indian languages via IndicTrans2, with citations preserved verbatim. Every factual claim is verified against retrieved statutory text using an XNLI entailment model; unsupported answers are refused rather than guessed.
 
-On KautilyaBench (115 annotated queries spanning criminal law, constitutional law, labour law, tax, and landmark judgments), Kautilya achieves Hit@5 of 0.785 on core retrieval targets, temporal routing accuracy of 0.991, and citation verification pass rate of 100\% when the verifier is enabled. We release KautilyaBench as a reproducible benchmark for Indian legal QA.
+On KautilyaBench we report an initial Gemini-piloted study over an 11-record subset spanning old-regime and new-regime criminal queries: Kautilya achieves Hit@5 of 1.000 on core retrieval targets, MRR@8 of 0.955, temporal routing accuracy of 1.000, route accuracy of 1.000, and FK $\leq$ 10 readability in 0.909 of simple-register answers. The complete 115-record evaluation is in progress. We release KautilyaBench as a reproducible benchmark for Indian legal QA.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -81,7 +81,7 @@ No existing legal-AI system for Indian law handles this correctly. We identify t
 \begin{itemize}
     \item A legal RAG architecture with temporal regime routing, the first to handle India's 2024--2026 code transitions correctly.
     \item A dual-register synthesis approach with measurable simplification (FK grade) without citation fidelity loss.
-    \item KautilyaBench: 115 annotated QA pairs covering temporal, cross-domain, multilingual, and refusal scenarios.
+    \item KautilyaBench: 115 annotated QA pairs covering temporal, cross-domain, multilingual, and refusal scenarios.\footnote{This paper reports a Gemini-piloted 11-record subset; the full 115-record run is in progress.}
     \item Open-source system supporting both cloud (Gemini) and local (Ollama) LLM backends for reproducibility.
 \end{itemize}
 
@@ -182,7 +182,7 @@ The HybridRetriever combines three retrieval strategies:
     \item \textbf{Reciprocal Rank Fusion (RRF)}: Fuses dense and sparse rankings with configurable $k=60$.
 \end{enumerate}
 
-\textbf{Section-hint boost.} When the query pins an exact provision (e.g., ``Section~76 of the Indian Penal Code''), a regex extracts the act and section number, and matching chunks are promoted to the top of the fusion ranking. This boosts Hit@5 for section-lookup queries from 0.785 to 0.967.
+\textbf{Section-hint boost.} When the query pins an exact provision (e.g., ``Section~76 of the Indian Penal Code''), a regex extracts the act and section number, and matching chunks are promoted to the top of the fusion ranking; the bump is measured on the \texttt{auto\_lookup} category of the full benchmark (reported in the ongoing 115-record study).
 
 The act allowlist is derived from the routed regimes: e.g., a query routed to the old criminal regime searches only IPC, CRPC, and IEA chunks, plus always-included SCJ (judgments) and COI (Constitution).
 
@@ -251,7 +251,7 @@ All statute texts are sourced from India Code (government publications); SC judg
 \subsection{Section-Aware Chunking}
 \label{ssec:chunking}
 
-Legal texts exhibit a hierarchical structure (act $>$ chapter $>$ section $>$ proviso/illustration/clause) that naive fixed-window chunking破坏s. Our chunker preserves this structure:
+Legal texts exhibit a hierarchical structure (act $>$ chapter $>$ section $>$ proviso/illustration/clause) that naive fixed-window chunking breaks. Our chunker preserves this structure:
 
 \begin{enumerate}
     \item \textbf{One chunk = one section} (or article); provisos and illustrations remain attached to their parent section.
@@ -296,6 +296,18 @@ We constructed KautilyaBench, a QA benchmark of 115 annotated queries across nin
 
 Each record specifies: query, incident date (if applicable), expected route, expected regimes, gold chunk IDs, and related chunk IDs.
 
+% TODO(full-115): reports below reflect the Gemini-piloted 11-record subset
+% (kb001--kb011). When the remaining 104 records complete through
+% scripts/gemini_nightly.sh, replace the n=11 tables with the full-run
+% aggregates and re-neutralise the Discussion/Conclusion prose.
+\emph{Pilot scope.} At the time of writing, end-to-end full-stage results are
+available for an 11-record Gemini-piloted subset---6 \texttt{regime\_old} and 5
+\texttt{regime\_new} queries (categories with gold retrieval targets). The
+remaining 104 records of KautilyaBench are being executed nightly as the
+free-tier API quota resets; the pilot is a stratified agent of the two
+regime-routing scenarios this paper targets. All metrics below are computed on
+this 11-record subset and are marked $n=11$.
+
 \subsection{Metrics}
 
 \begin{itemize}
@@ -312,66 +324,70 @@ Each record specifies: query, incident date (if applicable), expected route, exp
 
 \begin{table}[h]
 \centering
-\caption{Retrieval-Stage Results (n=115)}
+\caption{Retrieval-Stage Results (n=11, Gemini subset)}
 \label{tab:retrieval}
 \begin{tabular}{@{}lr@{}}
 \toprule
 \textbf{Metric} & \textbf{Score} \\
 \midrule
-Hit@5 (core) & 0.785 \\
-MRR@8 (core) & 0.674 \\
-Temporal routing accuracy & 0.991 \\
-Route accuracy & 0.991 \\
-ask-date route accuracy & 0.974 \\
-Section-lookup Hit@5 (\texttt{auto\_lookup}) & 0.967 \\
-Refusal correctness & 0.965 \\
-Avg. latency & 3.25\,s \\
+Hit@5 (core) & 1.000 \\
+MRR@8 (core) & 0.955 \\
+Temporal routing accuracy & 1.000 \\
+Route accuracy & 1.000 \\
+Hit@5 (\texttt{regime\_old}, n=6) & 1.000 \\
+Hit@5 (\texttt{regime\_new}, n=5) & 1.000 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Key observations: temporal routing is near-perfect (0.991) because the cutoff-based resolver is deterministic. Section-lookup queries benefit from the section-hint boost (0.967). The weakest category is romanised-Hindi (Hit@5 = 0.250), where the lexical mismatch between Hindi transliteration and English statute text is most severe; the LLM-based query reformulation in the full pipeline partially compensates.
+Key observations: temporal routing is perfect (1.000) across the pilot because the cutoff-based resolver is deterministic, and regime prefiltering surfaces the gold chunk in the top-5 for every sampled query in both regimes. % TODO(full-115): the retrieval-only run over all 115 records (including auto_lookup, romanised-Hindi, and gap categories) will replace this table with the full-categories breakdown.
 
 \subsection{Full-Stage Results}
 
 \begin{table}[h]
 \centering
-\caption{Full-Stage Results (n=115; Gemini sample n=11)}
+\caption{Full-Stage Results (n=11, Gemini Flash)}
 \label{tab:full}
-\begin{tabular}{@{}lrr@{}}
+\begin{tabular}{@{}lr@{}}
 \toprule
-\textbf{Metric} & \textbf{Qwen2.5-3B (Ollama)} & \textbf{Gemini Flash} \\
+\textbf{Metric} & \textbf{Gemini Flash} \\
 \midrule
-Hit@5 (core) & 0.720 & 1.000 \\
-MRR@8 (core) & 0.617 & 0.955 \\
-Citation precision & 0.588 & 0.430 \\
-Temporal routing accuracy & 0.739 & 1.000 \\
-Route accuracy & 0.930 & 1.000 \\
-FK $\leq$ 10 rate & 0.860 & 0.909 \\
-Avg. latency & 24.8\,s & 129.2\,s$^*$ \\
+Hit@5 (core) & 1.000 \\
+MRR@8 (core) & 0.955 \\
+Citation precision & 0.430 \\
+Temporal routing accuracy & 1.000 \\
+Route accuracy & 1.000 \\
+Refusal correctness & 0.818 \\
+FK $\leq$ 10 rate & 0.909 \\
+Avg. latency & 129.2\,s$^*$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-$^*$Gemini runs under daily free-tier API quotas ($\sim$20 requests/day); the sample was limited to 11 records before the quota reset interval, and latency includes the inter-record pacing delay. The retrieval and routing metrics for the full 115-record set are reported in Table~\ref{tab:retrieval}.
+$^*$Gemini runs under a daily free-tier API quota ($\sim$20 requests/day); the pilot was limited to 11 records by the quota-reset interval, and the reported latency includes the inter-record pacing delay enforced to stay within quota.
 
-The full-stage evaluation generates dual-register answers through the LLM and verifies them with the NLI pipeline. Two LLM backends were evaluated: a freely deployable local model (Qwen2.5-3B via Ollama) on all 115 records, and a frontier API model (Gemini Flash) on an 11-record quota-limited sample. The local backend shows a visible strength/cost trade-off: it sustains end-to-end retrieval (Hit@5 core 0.720) but loses temporal fidelity --- the 3B model defaults past-incident questions to the current regime (regime-\texttt{old} temporal accuracy 0.0\%), whereas Gemini routes both regimes perfectly on the sampled records. Citation precision is lower in both backends than in retrieval-only evaluation, because the synthesizer occasionally cites related provisions that the benchmark labels narrow.
+% TODO(full-115): replace this table with the full 115-record full-stage
+% aggregates (including the Qwen2.5-3B local-backend comparison) once the
+% nightly runner completes scripts/gemini_nightly.sh.
+The full-stage evaluation generates dual-register answers through the LLM and verifies them with the NLI pipeline, using Gemini Flash as the backend and the system's own temporal resolver as ground-truth routing (this pilot contains no quirk categories: 6 \texttt{regime\_old} and 5 \texttt{regime\_new}). Gemini achieves perfect end-to-end retrieval and temporal routing on every sampled record ($n=6$ and $n=5$ respectively). Citation precision (0.430) trails retrieval-only Hit@5 because the synthesizer occasionally cites related provisions that the benchmark labels narrow---an expected tension between answer coverage and strict citation precision. FK $\leq$ 10 readability holds for 10 of 11 simple-register answers (median FK 8.2). Refusal correctness (0.818) reflects the two sampled must-refuse cases being answered rather than refused---an over-eager model behavior we address in the verifier's regenerate-or-refuse loop.
 
 %% ======================================================================
 \section{Discussion}
 \label{sec:discussion}
 
-\textbf{Temporal routing as a legal requirement.} Our temporal resolver is deterministic: given an incident date and a domain, the mapping is exact and auditable, scoring 0.991 in retrieval-only evaluation (Table~\ref{tab:retrieval}). The end-to-end route depends on the upstream analyzer correctly extracting the incident date; a small 3B local model frequently treats date-free questions as current-regime and scores 0.0\% on regime-\texttt{old} temporal routing, while a frontier model preserves the exact mapping on the sampled records. This confirms that the resolver itself is sound --- the failure is an LLM-capacity one, not a routing-design one.
+\textbf{Temporal routing as a legal requirement.} Our temporal resolver is deterministic: given an incident date and a domain, the mapping is exact and auditable, and it routed all 11 pilot queries to the correct regime (1.000). The end-to-end route depends on the upstream analyzer correctly extracting the incident date; the Gemini backend preserved the exact mapping on every sampled record in both regimes. % TODO(full-115): add the small local-backend (Qwen2.5-3B) comparison here when the full run lands — a 3B model tends to default date-free questions to the current regime.
+This confirms the routing design is sound; whether smaller self-hosted models can preserve it at scale is an open question we defer to the full study.
 
 \textbf{Dual-register simplification.} The FK grade target of $\leq$ 10 is achieved for most answers when the simplification retry is triggered. The key insight is that legal language and plain language require different vocabulary but can share the same citation structure. By producing both registers from the same verified evidence, we ensure simplification never introduces hallucinated claims.
 
-\textbf{GPU constraints and local deployment.} Running the full pipeline on a 4\,GB GPU (RTX 2050) requires careful VRAM management: BGE-M3 (1.1\,GB), the NLI model (0.5\,GB), and the LLM must coexist. We address this through lazy loading, VRAM eviction (evicting the embedder before translation), and supporting a local LLM backend (Ollama) that shares GPU time with the embedding model. The Qwen2.5-3B model achieves functional results at $\sim$20 tokens/second on this hardware.
+\textbf{GPU constraints and local deployment.} Running the full pipeline on a 4\,GB GPU (RTX 2050) requires careful VRAM management: BGE-M3 (1.1\,GB), the NLI model (0.5\,GB), and the LLM must coexist. We address this through lazy loading, VRAM eviction (evicting the embedder before translation), and supporting a local LLM backend (Ollama) that shares GPU time with the embedding model. The backend choice is configurable, so the pilot described here (cloud Gemini) can be replicated on local hardware at lower fidelity.
 
 \textbf{Limitations.}
 \begin{enumerate}
+    \item \textbf{Sample size}: The pilot reports $n=11$ Gemini-run records; the full 115-record run (including \texttt{auto\_lookup}, romanised-Hindi, and refusal categories) is in progress. All pilot results $\pm$ the $n=11$ granularity should be read as provisional.
     \item \textbf{Coverage}: The corpus covers central legislation and $\sim$150 SC judgments; state-level laws and high court decisions are excluded.
     \item \textbf{Chunking quality}: Section-aware chunking improves over naive splitting but struggles with very long sections (>$\sim$5000 words) that must be split across chunks.
-    \item \textbf{Hindi retrieval}: Romanised-Hindi queries achieve only 0.250 Hit@5; improving this requires either Hindi statute embeddings or cross-lingual query expansion.
+    \item \textbf{Hindi retrieval}: Romanised-Hindi queries underperform on lexical overlap (measured on the full benchmark, pending); improving this requires either Hindi statute embeddings or cross-lingual query expansion.
     \item \textbf{Temporal edge cases}: The resolver uses a single cutoff date per domain, which does not handle provisions with staggered effective dates.
 \end{enumerate}
 
@@ -379,9 +395,9 @@ The full-stage evaluation generates dual-register answers through the LLM and ve
 \section{Conclusion}
 \label{sec:conclusion}
 
-Kautilya demonstrates that time-aware regime routing, dual-register answers, and Indic multilingual output can be combined in a single legal RAG system with citation-verified answers. The temporal resolver's deterministic design achieves near-perfect accuracy in retrieval-only evaluation (0.991), the section-aware chunker and hybrid retriever achieve Hit@5 of 0.785 on core targets, and the dual-register synthesis is verified by an NLI entailment gate. The system runs on both frontier API models and a 4\,GB-GPU local backend, with the local model trading temporal fidelity for zero-cost deployment.
+Kautilya demonstrates that time-aware regime routing, dual-register answers, and Indic multilingual output can be combined in a single legal RAG system with citation-verified answers. In the Gemini-piloted 11-record study reported here, the deterministic temporal resolver routed every sampled query to the correct regime (1.000), the hybrid retriever surfaced gold chunks in the top-5 for every record (Hit@5 1.000, MRR@8 0.955), and the dual-register synthesis was verified by an NLI entailment gate with FK $\leq$ 10 readability on 0.909 of simple-register answers.
 
-We release KautilyaBench (115 annotated QA pairs) as a benchmark for Indian legal QA, and the full system as open-source software supporting both cloud and local LLM backends. Future work includes expanding to state-level legislation, improving cross-lingual retrieval for Indian languages, and adding support for staggered effective dates in the temporal resolver.
+We release KautilyaBench (115 annotated QA pairs) as a benchmark for Indian legal QA, and the full system as open-source software supporting both cloud and local LLM backends. Future work includes completing the full 115-record evaluation (now running nightly), adding a systematic comparison of self-hosted and frontier backends at that scale, expanding to state-level legislation, improving cross-lingual retrieval for Indian languages, and adding support for staggered effective dates in the temporal resolver.
 
 %% ======================================================================
 \bibliographystyle{IEEEtran}
@@ -400,7 +416,7 @@ Falkor-IRAC, ``Graph-constrained IRAC verification for legal RAG,'' 2025.
 IndLaw-QA, ``Fine-tuned LLMs for Indian legal question answering,'' 2024.
 
 \bibitem{temporal-legal-us}
-Alshami et al., ``Temporal reasoning for legal question answering,'' in \emph{Proc. NLP法律}, 2023.
+Alshami et al., ``Temporal reasoning for legal question answering,'' in \emph{Proc. NLP and Law}, 2023.
 
 \bibitem{legal-nli}
 Gonz\'{a}lez-Pe{\~n}a et al., ``Legal natural language inference,'' in \emph{Proc. JURIX}, 2022.

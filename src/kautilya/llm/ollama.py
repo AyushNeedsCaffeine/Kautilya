@@ -42,6 +42,19 @@ class OllamaClient:
             self._http = httpx.Client(base_url=self.base_url, timeout=600.0)
         return self._http
 
+    # -- health -----------------------------------------------------------
+    def health(self) -> tuple[bool, str]:
+        """Cheap liveness probe for the UI status pill / preflight."""
+        try:
+            with httpx.Client(base_url=self.base_url, timeout=5.0) as http:
+                resp = http.get("/api/tags")
+                resp.raise_for_status()
+                models = [m.get("name", "?")
+                          for m in resp.json().get("models", [])]
+                return True, ", ".join(models[:5]) or "online"
+        except Exception as e:  # noqa: BLE001
+            return False, str(e)[:120]
+
     # -- low level ---------------------------------------------------------
     def generate(self, prompt: str, retries: int | None = None) -> str:
         """Call ``POST /api/generate`` with backoff on transient errors."""

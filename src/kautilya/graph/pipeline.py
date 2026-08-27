@@ -6,6 +6,8 @@ analyze -> resolve --(ask_date)--> END
 
 from __future__ import annotations
 
+import time
+
 from kautilya.graph.analyzer import analyze_query
 from kautilya.graph.resolver import resolve_temporal
 from kautilya.graph.state import PipelineState
@@ -81,6 +83,52 @@ def build_pipeline(llm=None,
     return g.compile()
 
 
+def _init_state(query: str,
+                incident_date: str | None = None,
+                final_lang: str | None = None) -> dict:
+    init: dict = {"query_raw": query.strip(), "retries": 0}
+    if incident_date:
+        init["incident_date"] = incident_date
+        init["needs_date"] = False
+    if final_lang:
+        init["final_lang"] = final_lang
+    return init
+
+
+def iter_steps(query: str,
+               llm=None,
+               retriever: HybridRetriever | None = None,
+               nli: NLIVerifier | None = None,
+               translator: IndicTranslator | None = None,
+               incident_date: str | None = None,
+               final_lang: str | None = None,
+               threshold: float = 0.75,
+               max_regen: int = 2,
+               timeout_s: float = 0.0):
+    """Yield ``(node_name, accumulated_state)`` as the graph executes.
+
+    Lets the UI render live per-node progress; nodes fail fast because the
+    UI threads ``retries=1`` through the LLM clients. ``run_query`` is a thin
+    wrapper that consumes this generator so all callers share one code path.
+    """
+    app = build_pipeline(llm=llm, retriever=retriever, nli=nli,
+                         translator=translator,
+                         threshold=threshold, max_regen=max_regen)
+    init = _init_state(query, incident_date=incident_date,
+                       final_lang=final_lang)
+    yield ("start", dict(init))
+    state: dict = dict(init)
+    t0 = time.time()
+    for update in app.stream(init, stream_mode="updates"):
+        for node, partial in update.items():
+            state.update(partial)
+            if timeout_s and (time.time() - t0) > timeout_s:
+                raise TimeoutError(
+                    f"query exceeded the {timeout_s:.0f}s safety timeout")
+            yield (node, dict(state))
+    yield ("end", state)
+
+
 def run_query(query: str,
               llm=None,
               retriever: HybridRetriever | None = None,
@@ -90,16 +138,12 @@ def run_query(query: str,
               final_lang: str | None = None,
               threshold: float = 0.75,
               max_regen: int = 2) -> dict:
-    app = build_pipeline(llm=llm, retriever=retriever, nli=nli,
-                         translator=translator,
-                         threshold=threshold, max_regen=max_regen)
-    init: dict = {"query_raw": query.strip(), "retries": 0}
-    if incident_date:
-        init["incident_date"] = incident_date
-        init["needs_date"] = False
-    if final_lang:
-        init["final_lang"] = final_lang
-    out = app.invoke(init)
+    out: dict = {}
+    for _node, state in iter_steps(
+            query, llm=llm, retriever=retriever, nli=nli, translator=translator,
+            incident_date=incident_date, final_lang=final_lang,
+            threshold=threshold, max_regen=max_regen):
+        out = state
     log.info("pipeline: route=%s verification=%s citations=%d",
              out.get("route"), out.get("verification"),
              len(out.get("citations", [])))

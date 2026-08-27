@@ -388,6 +388,30 @@ details[data-testid="stExpander"] summary {
     padding: 12px 16px;
 }
 
+/* ── equity row (sidebar health) ─────────────────────────────────────── */
+.health-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78em;
+    padding: 6px 10px;
+    margin: 4px 0;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+}
+.health-pill .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%%;
+    flex-shrink: 0;
+}
+.health-pill .dot.ok { background: var(--green); box-shadow: 0 0 6px rgba(76,175,80,0.6); }
+.health-pill .dot.bad { background: var(--red); box-shadow: 0 0 6px rgba(239,83,80,0.6); }
+.health-pill .hname { color: var(--text-dim); font-weight: 600; }
+.health-pill .hmsg { color: var(--text-light); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 /* ── divider ────────────────────────────────────────────────────────── */
 hr {
     border: none;
@@ -477,6 +501,30 @@ def status_badge_html(verification: str) -> str:
     elif verification == "fail":
         return '<span class="status-badge status-fail">&#9888; Unverified</span>'
     return ""
+
+
+def stage_progress_html(active_idx: int, labels: list[str],
+                        elapsed: float) -> str:
+    """Render pipeline stage chips (done / active / pending) for live UX."""
+    chips = ""
+    for i, label in enumerate(labels):
+        cls = "stage done" if i < active_idx else "stage active" if i == active_idx else "stage"
+        mark = "&#10003;" if i < active_idx else ("&#9679;" if i == active_idx else "&#9637;")
+        chips += f'<span class="{cls}">{mark}&nbsp;{label}</span>'
+    return f"""
+<div class="pipeline-stages">{chips}</div>
+<div class="stage-elapsed" style="font-family:'Inter',sans-serif;
+     color:var(--text-dim); font-size:0.78em; margin: 4px 0 12px 0;">
+    &#9201; {elapsed:.1f}s elapsed</div>
+"""
+
+
+def health_pill_html(name: str, ok: bool, msg: str) -> str:
+    """Render a sidebar status pill (live backend health)."""
+    dot = "ok" if ok else "bad"
+    return (f'<div class="health-pill"><span class="dot {dot}"></span>'
+            f'<span class="hname">{name}</span>'
+            f'<span class="hmsg">{msg}</span></div>')
 
 
 def equivalence_table_html(equivalences) -> str:

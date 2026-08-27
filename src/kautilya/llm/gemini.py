@@ -44,6 +44,14 @@ class GeminiClient:
         self.retries = retries
         self._client = None  # created on first use
 
+    # -- health -----------------------------------------------------------
+    def health(self) -> tuple[bool, str]:
+        """Key presence check (no network call — protects day quota)."""
+        key = (os.environ.get("GEMINI_API_KEY") or "").strip()
+        if not _KEY_RE.match(key):
+            return False, "no valid GEMINI_API_KEY in .env"
+        return True, "key present (quota unknown)"
+
     @property
     def client(self):
         if self._client is None:

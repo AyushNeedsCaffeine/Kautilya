@@ -16,7 +16,8 @@ if _src not in sys.path:
 import streamlit as st
 from kautilya.ui.styles import (
     APP_CSS, header_html, answer_card_html, citation_chips_html,
-    error_card_html, status_badge_html, equivalence_table_html,
+    error_card_html, health_pill_html, stage_progress_html,
+    status_badge_html, equivalence_table_html,
     info_panel_html,
 )
 
@@ -55,6 +56,59 @@ def _get_llm(provider: str):
     )
     _llm_cache[provider] = llm
     return llm
+
+# ── backend health (cheap probes, lightly cached) ──────────────────────
+
+@st.cache_data(ttl=20, show_spinner=False)
+def _ollama_health_snapshot() -> tuple[bool, str]:
+    from kautilya.llm.ollama import OllamaClient
+    return OllamaClient().health()
+
+@st.cache_data(ttl=30, show_spinner=False)
+def _gemini_health_snapshot() -> tuple[bool, str]:
+    from kautilya.llm.gemini import GeminiClient
+    return GeminiClient(model=settings.llm.model or "gemini-3-flash-preview").health()
+
+def _preflight_ollama() -> str | None:
+    """Return an error message if Ollama is unreachable (fast, no retries)."""
+    ok, msg = _ollama_health_snapshot()
+    if ok:
+        return None
+    return (f"Ollama is not responding. Start it with: "
+            f"`bash scripts/restart_kautilya.sh`\n\n" + msg)
+
+# ── friendly error copy (presentation layer) ────────────────────────────
+
+def _friendly_error(exc: Exception, provider: str) -> tuple[str, str]:
+    s = str(exc)
+    low = s.lower()
+    if "GEMINI_API_KEY" in s or "missing or malformed" in low:
+        return ("Gemini API key missing",
+                f"{s}\n\nSet GEMINI_API_KEY in the .env file (see "
+                f".env.example) and restart the app.")
+    if any(t in low for t in ("429", "resource_exhausted", "quota", "rate limit")):
+        return ("Gemini daily quota exhausted",
+                "The free-tier daily quota is up. Switch the LLM Backend to "
+                "Ollama in the sidebar, or retry after midnight (Pacific).")
+    if any(t in low for t in ("connection refused", "connect error",
+                              "11434", "ollama is not running")):
+        return ("Ollama is not running",
+                "Start it with: `bash scripts/restart_kautilya.sh`")
+    if "timeout" in low or "timed out" in low:
+        return ("The query timed out",
+                "It took longer than the safety limit to produce an answer. "
+                "Try again, or switch the LLM Backend in the sidebar.")
+    return (f"Could not produce an answer via {provider}",
+            s[:400])
+
+def _try_again_button(query: str) -> None:
+    if st.button("🔄 Try again", key=f"retry_{abs(hash(query))}"):
+        st.session_state["retry_query"] = query
+        st.rerun()
+
+STAGES = ["Analyze", "Route", "Retrieve", "Synthesize", "Verify", "Translate"]
+_STAGE_IDX = {"analyze": 0, "resolve": 1, "retrieve": 2,
+              "synthesize": 3, "verify": 4, "translate": 5}
 
 # ── heavy resources (lazy, cached) ─────────────────────────────────────
 
@@ -148,6 +202,17 @@ with st.sidebar:
         help="Ollama runs locally (default). Gemini requires API key.",
     )
 
+    ollama_ok, ollama_msg = _ollama_health_snapshot()
+    gemini_ok, gemini_msg = _gemini_health_snapshot()
+    st.markdown(
+        health_pill_html("Ollama", ollama_ok, ollama_msg)
+        + health_pill_html("Gemini", gemini_ok, gemini_msg),
+        unsafe_allow_html=True,
+    )
+    if llm_provider == "ollama" and not ollama_ok:
+        st.warning("Ollama is down — type a question to see the error, or "
+                   "run `bash scripts/restart_kautilya.sh`.")
+
     st.divider()
     legal_only = st.toggle("Legal register only", value=False)
     simple_only = st.toggle("Simple register only", value=True)
@@ -194,12 +259,13 @@ for msg in st.session_state.messages:
 
 # ── chat input ─────────────────────────────────────────────────────────
 
-query = st.chat_input("Ask a legal question about Indian law…")
+retry_query = st.session_state.pop("retry_query", None)
+query = retry_query or st.chat_input("Ask a legal question about Indian law…")
 
 if not query:
     st.stop()
 
-# display user message
+# display user message (re-appended on a retry so it reads as a fresh turn)
 st.session_state.messages.append({"role": "user", "content": query})
 with st.chat_message("user"):
     st.markdown(query)
@@ -215,7 +281,19 @@ with st.chat_message("assistant"):
     """
     loading_slot = st.empty()
     loading_slot.markdown(loading_html, unsafe_allow_html=True)
+    stage_slot = st.empty()
     info_slot = st.empty()
+
+    # Fail fast BEFORE the pipeline if the backend is obviously down.
+    if llm_provider == "ollama":
+        if preflight := _preflight_ollama():
+            loading_slot.empty()
+            st.markdown(error_card_html(
+                "Ollama is not running", preflight), unsafe_allow_html=True)
+            _try_again_button(query)
+            st.session_state.messages.append(
+                {"role": "assistant", "content": "⚠️ Ollama is not running."})
+            st.stop()
 
     t0 = time.time()
     try:
@@ -224,26 +302,38 @@ with st.chat_message("assistant"):
         nli = None if no_verify else _get_nli()
         translator = _get_translator()
 
-        from kautilya.graph.pipeline import run_query
+        from kautilya.graph.pipeline import iter_steps
         nli_threshold = 0.75 if llm_provider == "gemini" else 0.55
-        result = run_query(
-            query, llm=llm, retriever=retriever, nli=nli,
-            translator=translator,
-            incident_date=date_str,
-            final_lang=final_lang,
-            threshold=nli_threshold,
-        )
+        result: dict = {}
+        for node, part in iter_steps(
+                query, llm=llm, retriever=retriever, nli=nli,
+                translator=translator,
+                incident_date=date_str,
+                final_lang=final_lang,
+                threshold=nli_threshold,
+                timeout_s=240.0):
+            result = part
+            idx = _STAGE_IDX.get(node)
+            if idx is not None:
+                stage_slot.markdown(
+                    stage_progress_html(idx, STAGES,
+                                        time.time() - t0),
+                    unsafe_allow_html=True)
         latency = round(time.time() - t0, 1)
         result["_latency"] = latency
     except Exception as exc:
         loading_slot.empty()
-        st.error(f"Pipeline error: {exc}")
+        stage_slot.empty()
+        err_title, err_detail = _friendly_error(exc, llm_provider)
+        st.markdown(error_card_html(err_title, err_detail),
+                    unsafe_allow_html=True)
+        _try_again_button(query)
         st.session_state.messages.append(
-            {"role": "assistant", "content": f"Error: {exc}"}
-        )
+            {"role": "assistant", "content": f"⚠️ {err_title}"})
         st.stop()
 
     loading_slot.empty()
+    stage_slot.empty()
 
     # ── render result ──────────────────────────────────────────────────
 
@@ -267,10 +357,14 @@ with st.chat_message("assistant"):
         if "Answer generation failed" not in err:
             err = (f"Answer generation failed via {llm_provider}. "
                    "Please try again.")
-        st.markdown(error_card_html(err, detail), unsafe_allow_html=True)
+        err_title, err_detail = _friendly_error(
+            RuntimeError(detail or err), llm_provider)
+        st.markdown(error_card_html(err_title, err_detail),
+                    unsafe_allow_html=True)
+        _try_again_button(query)
         st.session_state.messages.append({
             "role": "assistant",
-            "content": f"⚠️ {err}",
+            "content": f"⚠️ {err_title}",
         })
         st.stop()
 
