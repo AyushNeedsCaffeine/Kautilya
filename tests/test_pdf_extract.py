@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from kautilya.ingestion.pdf_extract import split_constitution, split_numbered_provisions
 
-
 CONSTITUTION_SAMPLE = """PREAMBLE
 WE, THE PEOPLE OF INDIA
 PART III

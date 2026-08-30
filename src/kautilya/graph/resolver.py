@@ -11,7 +11,7 @@ import json
 import re
 from dataclasses import dataclass
 from datetime import date
-from functools import lru_cache
+from functools import cache
 from pathlib import Path
 
 from kautilya.log import get_logger
@@ -66,7 +66,7 @@ def load_mapping_table(path: Path) -> MappingTable:
                         cutoff=str(meta["cutoff"]), forward=fwd, reverse=rev)
 
 
-@lru_cache(maxsize=None)
+@cache
 def load_mappings(dir_path: str = str(DEFAULT_MAPPINGS_DIR)) -> dict[tuple[str, str], MappingTable]:
     out: dict[tuple[str, str], MappingTable] = {}
     d = Path(dir_path)

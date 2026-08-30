@@ -46,7 +46,7 @@ def _cmd_eval(args: argparse.Namespace) -> int:
                                sparse_k=ret.sparse_k, rrf_k=ret.rrf_k,
                                final_k=ret.final_k)
 
-        def pipeline_fn(query, incident_date=None):  # noqa: E306
+        def pipeline_fn(query, incident_date=None):
             return run_query(query, llm=llm, retriever=retr, nli=nli,
                              incident_date=incident_date)
 

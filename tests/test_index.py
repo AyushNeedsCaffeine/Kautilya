@@ -12,9 +12,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from kautilya.indexing.build_index import (  # noqa: E402
+from kautilya.indexing.build_index import (
     IndexConfig,
-    build_bm25,
     build_index,
     load_chunks,
     search_bm25,
@@ -55,8 +54,7 @@ def sample_chunks(tmp_path: Path) -> list[dict]:
     d = tmp_path / "chunks"
     d.mkdir()
     with open(d / "sample.jsonl", "w", encoding="utf-8") as f:
-        for c in chunks:
-            f.write(json.dumps(c) + "\n")
+        f.writelines(json.dumps(c) + "\n" for c in chunks)
     return chunks
 
 

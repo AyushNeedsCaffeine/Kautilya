@@ -15,13 +15,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from kautilya.chunking.legal_chunker import ChunkConfig, chunk_judgment  # noqa: E402
+from kautilya.chunking.legal_chunker import ChunkConfig, chunk_judgment
 
 COURT = "Supreme Court of India"
 NOISE_PATTERNS = [
-    re.compile(r"^\s*Page\s+\d+\s*$", re.I),
+    re.compile(r"^\s*Page\s+\d+\s*$", re.IGNORECASE),
     re.compile(r"^\s*\d{1,4}\s*$"),
-    re.compile(r"^\s*\[\s*\d{4}\s*(SUPREME COURT|SCC|SCR)", re.I),
+    re.compile(r"^\s*\[\s*\d{4}\s*(SUPREME COURT|SCC|SCR)", re.IGNORECASE),
 ]
 
 

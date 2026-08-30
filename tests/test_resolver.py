@@ -9,8 +9,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from kautilya.graph.resolver import (  # noqa: E402
-    find_equivalences,
+from kautilya.graph.resolver import (
     load_mappings,
     mentioned_sections,
     resolve_temporal,

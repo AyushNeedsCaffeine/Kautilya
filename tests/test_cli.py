@@ -26,7 +26,7 @@ def test_stub_commands_exit_two() -> None:
 
 
 def test_eval_is_now_real() -> None:
-    import kautilya.cli as cli
+    from kautilya import cli
 
     assert "eval" not in cli._NOT_IMPLEMENTED
     sub = cli.build_parser()._subparsers._group_actions[0].choices
@@ -36,7 +36,7 @@ def test_eval_is_now_real() -> None:
 
 
 def test_ask_is_now_real() -> None:
-    import kautilya.cli as cli
+    from kautilya import cli
 
     assert "ask" not in cli._NOT_IMPLEMENTED
     sub = cli.build_parser()._subparsers._group_actions[0].choices

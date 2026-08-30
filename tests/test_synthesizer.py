@@ -6,12 +6,10 @@ import json
 import sys
 from pathlib import Path
 
-import pytest
-
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from kautilya.graph.pipeline import build_pipeline, run_query  # noqa: E402
-from kautilya.graph.synthesizer import synthesize  # noqa: E402
+from kautilya.graph.pipeline import build_pipeline, run_query
+from kautilya.graph.synthesizer import synthesize
 
 RETRIEVED = [
     {"chunk_id": "IPC_s420", "act_short": "IPC", "regime": "old",

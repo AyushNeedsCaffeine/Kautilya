@@ -14,11 +14,18 @@ if _src not in sys.path:
     sys.path.insert(0, _src)
 
 import streamlit as st
+
 from kautilya.ui.styles import (
-    APP_CSS, header_html, answer_card_html, citation_chips_html,
-    error_card_html, health_pill_html, stage_progress_html,
-    status_badge_html, equivalence_table_html,
+    APP_CSS,
+    answer_card_html,
+    citation_chips_html,
+    equivalence_table_html,
+    error_card_html,
+    header_html,
+    health_pill_html,
     info_panel_html,
+    stage_progress_html,
+    status_badge_html,
 )
 
 st.set_page_config(
@@ -74,8 +81,8 @@ def _preflight_ollama() -> str | None:
     ok, msg = _ollama_health_snapshot()
     if ok:
         return None
-    return (f"Ollama is not responding. Start it with: "
-            f"`bash scripts/restart_kautilya.sh`\n\n" + msg)
+    return ("Ollama is not responding. Start it with: "
+            "`bash scripts/restart_kautilya.sh`\n\n" + msg)
 
 # ── friendly error copy (presentation layer) ────────────────────────────
 

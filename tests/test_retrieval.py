@@ -11,8 +11,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from kautilya.indexing.build_index import IndexConfig, build_index  # noqa: E402
-from kautilya.indexing.search import (  # noqa: E402
+from kautilya.indexing.build_index import IndexConfig, build_index
+from kautilya.indexing.search import (
     HybridRetriever,
     retrieve_node,
     rrf_fuse,
@@ -75,8 +75,7 @@ def index(tmp_path_factory):
     chunks_dir = root / "chunks"
     chunks_dir.mkdir(parents=True)
     with open(chunks_dir / "test.jsonl", "w", encoding="utf-8") as f:
-        for c in CHUNKS:
-            f.write(json.dumps(c) + "\n")
+        f.writelines(json.dumps(c) + "\n" for c in CHUNKS)
     cfg = IndexConfig(persist=persist)
     build_index(CHUNKS, cfg, embedder=VocabEmbedder())
     return persist, chunks_dir

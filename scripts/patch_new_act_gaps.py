@@ -14,22 +14,22 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from kautilya.ingestion.pdf_extract import extract_pdf_text, split_numbered_provisions
+from kautilya.ingestion.pdf_extract import split_numbered_provisions
 
 STATUTES = Path("data/processed/statutes")
 
 ACTS = {
     "BNS": {
         "pdf": Path("/tmp/opencode/bns_gaz.pdf"),
-        "start_re": re.compile(r"BHARATIYA\s+NYAYA\s+SANHITA", re.I),
+        "start_re": re.compile(r"BHARATIYA\s+NYAYA\s+SANHITA", re.IGNORECASE),
     },
     "BNSS": {
         "pdf": Path("/tmp/opencode/bnss_gaz.pdf"),
-        "start_re": re.compile(r"BHARATIYA\s+NAGARIK\s+SURAKSHA\s+SANHITA", re.I),
+        "start_re": re.compile(r"BHARATIYA\s+NAGARIK\s+SURAKSHA\s+SANHITA", re.IGNORECASE),
     },
     "BSA": {
         "pdf": Path("/tmp/opencode/bsa_gaz.pdf"),
-        "start_re": re.compile(r"BHARATIYA\s+SAKSHYA\s+ADHINIYAM", re.I),
+        "start_re": re.compile(r"BHARATIYA\s+SAKSHYA\s+ADHINIYAM", re.IGNORECASE),
     },
 }
 
@@ -91,8 +91,7 @@ def main() -> int:
         still_missing = [n for n in missing if False]
         if new_rows:
             with open(shard_path, "a", encoding="utf-8") as f:
-                for r in new_rows:
-                    f.write(json.dumps(r, ensure_ascii=False) + "\n")
+                f.writelines(json.dumps(r, ensure_ascii=False) + "\n" for r in new_rows)
 
         # any referenced-but-still-absent numbers?
         left = [n for n in missing if n not in {r['section_no'] for r in new_rows}] + still_missing

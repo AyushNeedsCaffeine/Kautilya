@@ -72,7 +72,7 @@ class OllamaClient:
                 resp.raise_for_status()
                 data = resp.json()
                 return data.get("response", "")
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 transient = any(t in str(e) for t in
                                 ("503", "429", "500", "connection",
                                  "timeout", "CONNECT"))

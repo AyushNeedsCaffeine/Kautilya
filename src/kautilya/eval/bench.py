@@ -72,7 +72,7 @@ def mrr_at_k(retrieved: list[str], gold: list[str], k: int) -> float:
 def citation_precision(cited: list[str], record: Record) -> tuple[float, int]:
     """Fraction of citations that are gold-or-related; (prec, n_cited)."""
     ok = set(record.gold_chunk_ids) | set(record.related_chunk_ids)
-    base = lambda cid: cid.split("_p")[0]  # noqa: E731 - parts count as same
+    base = lambda cid: cid.split("_p")[0]
     ok_bases = {base(i) for i in ok}
     good = sum(1 for c in cited if base(c) in ok_bases)
     return (good / len(cited)) if cited else 1.0, len(cited)

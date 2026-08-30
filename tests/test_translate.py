@@ -2,17 +2,13 @@
 
 from __future__ import annotations
 
-import pytest
-from unittest.mock import MagicMock
-
-from kautilya.translate.indictrans2 import (
-    IndicTranslator,
-    _LANG_MAP,
-    _evict_heavy_models,
-)
 from kautilya.graph.pipeline import translate_node
 from kautilya.graph.state import PipelineState
-
+from kautilya.translate.indictrans2 import (
+    _LANG_MAP,
+    IndicTranslator,
+    _evict_heavy_models,
+)
 
 # ── language mapping ──────────────────────────────────────────────────────
 
@@ -126,6 +122,7 @@ class TestPipelineTranslate:
     def test_translate_reaches_end(self):
         """Full pipeline with a FakeLLM hits translate then END."""
         import json as _json
+
         from kautilya.graph.pipeline import build_pipeline
 
         class FakeLLM:

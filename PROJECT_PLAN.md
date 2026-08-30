@@ -273,7 +273,6 @@ Kautilya/
 │   ├── graph/                 state.py nodes/{analyzer,resolver,retriever,
 │   │                          synthesizer,verifier,translator}.py pipeline.py
 │   ├── llm/                   providers.py (gemini/openai/ollama factory)
-│   ├── verify/                nli.py citation_check.py
 │   ├── translate/             indictrans2.py detect.py
 │   ├── ui/app.py              streamlit
 │   └── eval/                  metrics.py run_bench.py judge.py

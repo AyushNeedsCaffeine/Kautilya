@@ -22,9 +22,9 @@ CHAPTERS = range(1, 24)
 
 SEC_RE = re.compile(
     r"Section\s*(\d{1,3}[A-Z]?)\s*[:\-]+\s*(.*?)\s*?\n(.*?)(?=Section\s*\d{1,3}[A-Z]?\s*[:\-]+|\Z)",
-    re.S,
+    re.DOTALL,
 )
-CHAPTER_TITLE_RE = re.compile(r"Chapter\s+[IVXLC]+\s*[&#8211;\u2013-]\s*(.+)", re.I)
+CHAPTER_TITLE_RE = re.compile(r"Chapter\s+[IVXLC]+\s*[&#8211;\u2013-]\s*(.+)", re.IGNORECASE)
 
 
 def fetch(url: str) -> str:
@@ -34,7 +34,7 @@ def fetch(url: str) -> str:
 
 
 def strip_tags(html: str) -> str:
-    html = re.sub(r"<script.*?</script>|<style.*?</style>", "", html, flags=re.S)
+    html = re.sub(r"<script.*?</script>|<style.*?</style>", "", html, flags=re.DOTALL)
     html = re.sub(r"<br\s*/?>|</p>|</div>|</li>|</h\d>", "\n", html)
     return re.sub(r"<[^>]+>", "", html)
 
@@ -113,8 +113,7 @@ def main() -> int:
 
     if new_rows:
         with open(SHARD, "a", encoding="utf-8") as f:
-            for r in new_rows:
-                f.write(json.dumps(r, ensure_ascii=False) + "\n")
+            f.writelines(json.dumps(r, ensure_ascii=False) + "\n" for r in new_rows)
 
     print(f"\nappended {len(new_rows)} rows -> {SHARD}")
     return 0

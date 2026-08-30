@@ -9,7 +9,6 @@ Language mapping: ISO 639-1 → Florence notation used by IndicTrans2.
 from __future__ import annotations
 
 import gc
-import logging
 from typing import Protocol
 
 from kautilya.log import get_logger

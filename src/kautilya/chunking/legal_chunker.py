@@ -21,7 +21,7 @@ import yaml
 CLAUSE_RE = re.compile(r"^\((?:[a-z]{1,3}|\d{1,2}|[ivxlcdm]{1,6})[\).]\s")
 STAGE_RE = re.compile(
     r"^(proviso|provided\s+that|explanation|illustrations?|comments?|annotations?)\b",
-    re.I,
+    re.IGNORECASE,
 )
 PART_SUFFIX = "_p{0}"
 
@@ -33,7 +33,7 @@ class ChunkConfig:
     keep_proviso_attached: bool = True
 
     @classmethod
-    def from_settings(cls, path: Path) -> "ChunkConfig":
+    def from_settings(cls, path: Path) -> ChunkConfig:
         cfg = yaml.safe_load(path.read_text(encoding="utf-8")).get("chunking", {})
         return cls(
             max_tokens=int(cfg.get("max_tokens", 1200)),
@@ -303,7 +303,7 @@ def chunk_judgment(text: str, meta: dict, cfg: ChunkConfig) -> list[dict]:
             cid = f"{meta.get('case_id', 'SCJ')}_{stage.upper()[:12]}"
             if len(segs) > 1:
                 cid += PART_SUFFIX.format(i)
-            full = f"{head}\n[{stage}]\n{seg}" if len(segs) > 1 else f"{head}\n[{stage}]\n{seg}"
+            full = f"{head}\n[{stage}]\n{seg}"
             chunks.append({
                 "chunk_id": cid,
                 "act": "Supreme Court of India",

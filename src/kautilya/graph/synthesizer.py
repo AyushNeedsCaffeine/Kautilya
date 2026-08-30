@@ -12,8 +12,8 @@ import json
 import re
 from typing import Any
 
-from kautilya.log import get_logger
 from kautilya.llm.gemini import strip_fences
+from kautilya.log import get_logger
 
 log = get_logger(__name__)
 

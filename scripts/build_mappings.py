@@ -31,9 +31,9 @@ SOURCES = {
 }
 
 ENTRY_RE = re.compile(r"^(\d{1,3}[A-Z]?)\s*(?:\(([^)]{1,8})\))?\s*[.:\u2013\u2014-]?\s*(.*)$")
-NEW_MARKER_RE = re.compile(r"^new\s+(section|sub-?section|addition|clause|entry)", re.I)
-GONE_MARKER_RE = re.compile(r"^(deleted|omitted|repealed)\b", re.I)
-CHAPTER_RE = re.compile(r"^(chapter\b|part\b|schedule\b|the first|appendix)", re.I)
+NEW_MARKER_RE = re.compile(r"^new\s+(section|sub-?section|addition|clause|entry)", re.IGNORECASE)
+GONE_MARKER_RE = re.compile(r"^(deleted|omitted|repealed)\b", re.IGNORECASE)
+CHAPTER_RE = re.compile(r"^(chapter\b|part\b|schedule\b|the first|appendix)", re.IGNORECASE)
 
 
 def fetch(url: str) -> str:
@@ -45,7 +45,7 @@ def fetch(url: str) -> str:
 def table_rows(html: str) -> tuple[list[list[list[str]]], int]:
     """Return (rows_of_cells_of_paragraph_texts, new_col_index)."""
     head = html[:html.find("<tbody")]
-    headers = [re.sub(r"<[^>]+>", "", h) for h in re.findall(r"<th[^>]*>(.*?)</th>", head, re.S)]
+    headers = [re.sub(r"<[^>]+>", "", h) for h in re.findall(r"<th[^>]*>(.*?)</th>", head, re.DOTALL)]
     headers = [htmllib.unescape(re.sub(r"\s+", " ", h)).strip().lower() for h in headers]
     new_idx = 0
     for i, h in enumerate(headers):
@@ -55,13 +55,13 @@ def table_rows(html: str) -> tuple[list[list[list[str]]], int]:
 
     rows: list[list[list[str]]] = []
     body = html[html.find("<tbody"):]
-    for tr in re.findall(r"<tr[^>]*>(.*?)</tr>", body, re.S):
-        tds = re.findall(r"<td[^>]*>(.*?)</td>", tr, re.S)
+    for tr in re.findall(r"<tr[^>]*>(.*?)</tr>", body, re.DOTALL):
+        tds = re.findall(r"<td[^>]*>(.*?)</td>", tr, re.DOTALL)
         if len(tds) < 2:
             continue
         row = []
         for td in tds:
-            ps = re.findall(r"<p[^>]*>(.*?)</p>|<br\s*/?>", td, re.S)
+            ps = re.findall(r"<p[^>]*>(.*?)</p>|<br\s*/?>", td, re.DOTALL)
             chunks = ps or [td]
             texts = []
             for c in chunks:

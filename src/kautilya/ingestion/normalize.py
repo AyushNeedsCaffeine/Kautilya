@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-import hashlib
 import re
-from datetime import date
 
 import polars as pl
 
-from kautilya.ingestion.sources import ActSource
 from kautilya.ingestion import textutils
+from kautilya.ingestion.sources import ActSource
 from kautilya.schemas import Provision
 
 

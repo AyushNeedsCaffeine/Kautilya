@@ -26,8 +26,7 @@ def ingest_legislation(parquet_path: Path, out_dir: Path) -> dict[str, dict]:
         provisions = normalize_act(sub, source)
         shard = out_dir / f"{source.short}.jsonl"
         with open(shard, "w", encoding="utf-8") as fh:
-            for p in provisions:
-                fh.write(p.model_dump_json() + "\n")
+            fh.writelines(p.model_dump_json() + "\n" for p in provisions)
         expected = source.expected_sections or 0
         found = len(provisions)
         report[source.short] = {

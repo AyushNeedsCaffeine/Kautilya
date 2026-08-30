@@ -25,7 +25,7 @@ class IndexConfig:
     dtype: str = "float32"
 
     @classmethod
-    def from_settings(cls, path: Path) -> "IndexConfig":
+    def from_settings(cls, path: Path) -> IndexConfig:
         import yaml
 
         raw = yaml.safe_load(path.read_text(encoding="utf-8"))
@@ -137,7 +137,6 @@ def build_index(
     vecs = np.vstack(vectors) if vectors else np.zeros((0, 1), dtype=np.float32)
 
     import lancedb
-    import pyarrow as pa
 
     rows = []
     for c, v in zip(chunks, vecs):

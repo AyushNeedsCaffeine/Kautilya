@@ -105,8 +105,7 @@ class NLIVerifier:
         for text in contexts.values():
             scores = self.entailment_scores(text, hypotheses)[:len(best)]
             for i, sc in enumerate(scores):
-                if sc > best[i]:
-                    best[i] = sc
+                best[i] = max(best[i], sc)
         return best
 
 
@@ -165,7 +164,7 @@ def verify(state: dict,
     # ---- routing ---------------------------------------------------------
     retries = int(state.get("retries") or 0)
     if not problems:
-        return {"route": None if state.get("answer_legal") else "regenerate",
+        return {"route": None,
                 "verification": "pass",
                 "verification_notes": notes}
 

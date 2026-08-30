@@ -10,9 +10,12 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from kautilya.graph.pipeline import run_query  # noqa: E402
-from kautilya.graph.verifier import (  # noqa: E402
-    NLIVerifier, hypothesis_variants, split_sentences, verify)
+from kautilya.graph.pipeline import run_query
+from kautilya.graph.verifier import (
+    hypothesis_variants,
+    split_sentences,
+    verify,
+)
 
 RETRIEVED = [
     {"chunk_id": "IPC_s420", "act_short": "IPC", "regime": "old",

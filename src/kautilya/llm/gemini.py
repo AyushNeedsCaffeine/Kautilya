@@ -87,7 +87,7 @@ class GeminiClient:
                         temperature=self.temperature),
                 )
                 return resp.text or ""
-            except Exception as e:  # noqa: BLE001 - inspect and re-raise
+            except Exception as e:
                 transient = any(t in str(e) for t in
                                 ("503", "429", "UNAVAILABLE",
                                  "RESOURCE_EXHAUSTED", "overloaded"))

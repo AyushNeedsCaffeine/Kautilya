@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from kautilya.chunking.legal_chunker import (  # noqa: E402
+from kautilya.chunking.legal_chunker import (
     ChunkConfig,
     chunk_judgment,
     chunk_statute_row,

@@ -104,6 +104,5 @@ def write_shards(provisions: list[Provision], out_dir: Path) -> Path:
     out_dir.mkdir(parents=True, exist_ok=True)
     shard = out_dir / f"{provisions[0].act_short}.jsonl"
     with open(shard, "w", encoding="utf-8") as fh:
-        for p in provisions:
-            fh.write(p.model_dump_json() + "\n")
+        fh.writelines(p.model_dump_json() + "\n" for p in provisions)
     return shard

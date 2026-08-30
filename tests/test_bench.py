@@ -10,9 +10,17 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from kautilya.eval.bench import (  # noqa: E402
-    Record, citation_precision, evaluate, hit_at_k, load_bench,
-    mrr_at_k, refusal_correct, route_matches, temporal_correct)
+from kautilya.eval.bench import (
+    Record,
+    citation_precision,
+    evaluate,
+    hit_at_k,
+    load_bench,
+    mrr_at_k,
+    refusal_correct,
+    route_matches,
+    temporal_correct,
+)
 
 
 def test_hit_and_mrr_basics():

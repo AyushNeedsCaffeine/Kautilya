@@ -9,13 +9,13 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from kautilya.graph.analyzer import (  # noqa: E402
+from kautilya.graph.analyzer import (
     analyze_query,
     detect_domains,
     detect_language,
     parse_date,
 )
-from kautilya.llm.gemini import MissingAPIKeyError, strip_fences  # noqa: E402
+from kautilya.llm.gemini import MissingAPIKeyError, strip_fences
 
 
 class FakeLLM:

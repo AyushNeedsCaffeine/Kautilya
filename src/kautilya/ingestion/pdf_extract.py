@@ -105,7 +105,7 @@ def split_ita_sections(text: str) -> list[tuple[str, str | None, str]]:
     raw_lines = text.splitlines()
     stop = None
     for i, ln in enumerate(raw_lines):
-        if re.match(r"^(?:THE\s+)?(?:FIRST|SECOND|THIRD|FOURTH|FIFTH)\s+SCHEDULE\b", ln.strip(), re.I):
+        if re.match(r"^(?:THE\s+)?(?:FIRST|SECOND|THIRD|FOURTH|FIFTH)\s+SCHEDULE\b", ln.strip(), re.IGNORECASE):
             stop = i
             break
     lines = raw_lines[:stop] if stop else raw_lines
