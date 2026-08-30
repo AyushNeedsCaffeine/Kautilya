@@ -17,6 +17,7 @@ data/raw/*
 data/models/
 hf_cache/
 reports/*.html
+reports/*.jsonl
 
 .DS_Store
 Thumbs.db
